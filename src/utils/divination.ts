@@ -160,12 +160,13 @@ function calculateNajia(hexagram: Hexagram, _yaos: Yao[], dateGanIndex: number =
     const isUpper = i >= 3
     const naJia = isUpper ? upperNajia[i] : lowerNajia[i]
     
-    const gan = naJia?.[0] || ''
-    const ganWuxing: Record<string, string> = {
-      '甲': '木', '乙': '木', '丙': '火', '丁': '火', '戊': '土',
-      '己': '土', '庚': '金', '辛': '金', '壬': '水', '癸': '水'
+    const zhi = naJia?.slice(1) || ''
+    const zhiWuxing: Record<string, string> = {
+      '子': '水', '丑': '土', '寅': '木', '卯': '木',
+      '辰': '土', '巳': '火', '午': '火', '未': '土',
+      '申': '金', '酉': '金', '戌': '土', '亥': '水',
     }
-    const yaoElement = ganWuxing[gan] || '木'
+    const yaoElement = zhiWuxing[zhi] || '木'
     
     let sixQin = '兄弟'
     if (yaoElement === gongElement) sixQin = '兄弟'
