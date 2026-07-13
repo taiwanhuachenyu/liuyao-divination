@@ -194,9 +194,11 @@ function getGongAndShiYing(upperId: number, lowerId: number): { gongId: number; 
     c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]; c[4] = !c[4]
     if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 4, ying: 1 }
     
-    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]; c[4] = !c[4]; c[3] = !c[3]
+    // 游魂卦：初、二、三、五爻变（相对本宫），世四应初
+    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[4] = !c[4]
     if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 3, ying: 0 }
-    
+
+    // 归魂卦：仅五爻变（相对本宫），世三应六
     c = [...base]; c[4] = !c[4]
     if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 2, ying: 5 }
   }
