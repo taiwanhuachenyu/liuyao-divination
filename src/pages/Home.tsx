@@ -6,7 +6,6 @@ import { createDivination, timeDivination } from '../utils/divination'
 import Coin from '../components/Coin'
 import YaoLine from '../components/YaoLine'
 import HistoryDrawer from '../components/HistoryDrawer'
-import FontSwitcher from '../components/FontSwitcher'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
 const METHOD_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
@@ -128,7 +127,6 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-1">
-            <FontSwitcher />
             <button 
               onClick={() => setHistoryOpen(true)}
               className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md"

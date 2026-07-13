@@ -4,12 +4,6 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  safelist: [
-    'font-song',
-    'font-kai',
-    'font-li',
-    'font-hei',
-  ],
   theme: {
     extend: {
       colors: {
@@ -22,10 +16,7 @@ export default {
         'ink-light': '#3D3D3D',
       },
       fontFamily: {
-        song: ['"Noto Serif SC"', '"Source Han Serif SC"', '"Songti SC"', 'SimSun', '"STSong"', 'serif'],
-        kai: ['"LXGW WenKai"', '"ZCOOL XiaoWei"', 'KaiTi', '"STKaiti"', '"DFKai-SB"', 'serif'],
         li: ['"Ma Shan Zheng"', '"STLiti"', 'LiSu', '"FangSong"', 'cursive'],
-        hei: ['"Noto Sans SC"', '"Microsoft YaHei"', 'PingFang SC', '"Heiti SC"', 'SimHei', 'sans-serif'],
       },
       animation: {
         'coin-flip': 'coinFlip 0.8s ease-out',

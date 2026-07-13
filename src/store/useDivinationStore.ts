@@ -2,8 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Divination, Yao } from '../types'
 
-export type FontType = 'song' | 'kai' | 'li' | 'hei'
-
 interface DivinationState {
   yaos: (Yao | null)[]
   question: string
@@ -13,7 +11,6 @@ interface DivinationState {
   isFlipping: boolean
   result: Divination | null
   history: Divination[]
-  font: FontType
   setQuestion: (q: string) => void
   setDate: (d: string) => void
   setMethod: (m: 'coins' | 'manual' | 'time') => void
@@ -25,7 +22,6 @@ interface DivinationState {
   setCurrentStep: (s: number) => void
   loadFromHistory: (d: Divination) => void
   deleteHistory: (id: string) => void
-  setFont: (f: FontType) => void
 }
 
 const today = new Date().toISOString().split('T')[0]
@@ -41,7 +37,6 @@ export const useDivinationStore = create<DivinationState>()(
       isFlipping: false,
       result: null,
       history: [],
-      font: 'kai',
       setQuestion: (q) => set({ question: q }),
       setDate: (d) => set({ date: d }),
       setMethod: (m) => set({ method: m, yaos: Array(6).fill(null), currentStep: 0 }),
@@ -66,11 +61,10 @@ export const useDivinationStore = create<DivinationState>()(
       deleteHistory: (id) => set((state) => ({
         history: state.history.filter(h => h.id !== id)
       })),
-      setFont: (f) => set({ font: f }),
     }),
     {
       name: 'liuyao-storage',
-      partialize: (state) => ({ history: state.history, font: state.font }),
+      partialize: (state) => ({ history: state.history }),
     }
   )
 )

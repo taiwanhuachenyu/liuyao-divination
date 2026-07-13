@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles } from 'lucide-react'
 import { useDivinationStore } from '../store/useDivinationStore'
 import { getHexagramInterpretation } from '../utils/divination'
-import FontSwitcher from '../components/FontSwitcher'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
 
@@ -75,7 +74,6 @@ export default function Result() {
             卦象详情
           </h1>
           <div className="flex gap-1">
-            <FontSwitcher />
             <button onClick={handleShare} className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md" title="分享">
               <Share2 size={18} className="md:w-[22px] md:h-[22px] text-ink-light" />
             </button>
