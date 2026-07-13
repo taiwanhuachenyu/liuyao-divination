@@ -30,7 +30,7 @@ export default function Result() {
     )
   }
 
-  const { original, changed, originalYao, changedYao, najia, question, date, dayGanZhi, monthJian, xunKong } = result
+  const { original, changed, originalYao, changedYao, najia, changedNajia, question, date, dayGanZhi, monthJian, xunKong } = result
   const reversedYaos = originalYao.slice().reverse()
   const reversedNajia = najia.slice().reverse()
   const changingYaos = originalYao.map((y, i) => y.changing ? i : -1).filter(i => i >= 0)
@@ -232,20 +232,34 @@ export default function Result() {
                 </div>
               </div>
               <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center gap-2 md:gap-3 mb-2 md:mb-3 pb-2 border-b border-paper-dark/40 text-[10px] md:text-xs text-ink-light/70 tracking-wide">
+                  <div className="w-14 md:w-16 text-right">变爻六亲·纳甲</div>
+                  <div className="w-20 md:w-28 text-center">卦 象</div>
+                  <div className="w-8 md:w-10 text-left">爻题</div>
+                </div>
                 {changedYao.slice().reverse().map((yao, idx) => {
                   const pos = 5 - idx
-                  const originalYaoHere = originalYao[pos]
+                  const isChangedYao = originalYao[pos].changing
+                  const cn = changedNajia?.[pos]
                   return (
-                    <div key={pos} className="relative flex items-center my-1.5 md:my-2.5 scale-90 md:scale-100">
+                    <div key={pos} className="flex items-center justify-center gap-2 md:gap-3 my-1.5 md:my-2.5">
+                      <div className="w-14 md:w-16 text-right leading-tight">
+                        {isChangedYao && cn && (
+                          <>
+                            <div className="text-xs md:text-sm text-ocher">{cn.sixQin}</div>
+                            <div className="text-[10px] md:text-xs text-indigo">{cn.naJia}</div>
+                          </>
+                        )}
+                      </div>
                       {yao.yin ? (
-                        <div className="h-3 md:h-4 w-20 md:w-28 flex justify-between">
-                          <div className={`w-7 md:w-11 h-3 md:h-4 rounded shadow-sm ${originalYaoHere.changing ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
-                          <div className={`w-7 md:w-11 h-3 md:h-4 rounded shadow-sm ${originalYaoHere.changing ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
+                        <div className="h-3 md:h-4 w-20 md:w-28 flex justify-between shrink-0">
+                          <div className={`w-7 md:w-11 h-full rounded shadow-sm ${isChangedYao ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
+                          <div className={`w-7 md:w-11 h-full rounded shadow-sm ${isChangedYao ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
                         </div>
                       ) : (
-                        <div className={`h-3 md:h-4 w-20 md:w-28 rounded shadow-sm ${originalYaoHere.changing ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
+                        <div className={`h-3 md:h-4 w-20 md:w-28 rounded shadow-sm shrink-0 ${isChangedYao ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
                       )}
-                      <span className="ml-3 md:ml-5 text-xs md:text-sm text-ink-light w-8 md:w-10">{YAO_LABELS[pos]}</span>
+                      <span className={`w-8 md:w-10 text-left text-xs md:text-sm ${isChangedYao ? 'text-ocher font-medium' : 'text-ink-light'}`}>{yaoTitle(pos, yao.yin)}</span>
                     </div>
                   )
                 })}
@@ -254,6 +268,9 @@ export default function Result() {
                 <span className="px-2 md:px-3 py-1 bg-cinnabar/10 text-cinnabar rounded-full text-xs md:text-sm">
                   {changingYaos.length} 爻动
                 </span>
+              </p>
+              <p className="mt-3 text-center text-[10px] md:text-xs text-ink-light/60">
+                橙色为变爻，左标其回头纳甲与六亲（六亲以本卦之宫论）
               </p>
             </div>
           ) : (

@@ -39,6 +39,13 @@ export interface NajiaItem {
   ying: boolean
 }
 
+// 变卦纳甲与六亲（六亲以本卦之宫为准，用于回头生克）
+export interface ChangedNajiaItem {
+  position: number
+  naJia: string
+  sixQin: string
+}
+
 export interface Divination {
   id: string
   question: string
@@ -49,6 +56,7 @@ export interface Divination {
   original: Hexagram
   changed: Hexagram | null
   najia: NajiaItem[]
+  changedNajia?: ChangedNajiaItem[] | null
   dayGanZhi: string
   monthJian: string
   xunKong: string

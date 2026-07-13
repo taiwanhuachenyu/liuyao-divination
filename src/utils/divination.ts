@@ -1,5 +1,5 @@
 import { Solar } from 'lunar-typescript'
-import { Yao, Hexagram, NajiaItem, Divination } from '../types'
+import { Yao, Hexagram, NajiaItem, ChangedNajiaItem, Divination } from '../types'
 import { getTrigramFromYaos, TRIGRAM_YAO_MAP, TRIGRAMS } from '../data/trigrams'
 import { HEXAGRAMS } from '../data/hexagrams'
 
@@ -16,6 +16,33 @@ const NAJIA_GANZHI: Record<string, string[]> = {
 }
 
 const TIAN_GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']
+
+const ZHI_WUXING: Record<string, string> = {
+  '子': '水', '丑': '土', '寅': '木', '卯': '木',
+  '辰': '土', '巳': '火', '午': '火', '未': '土',
+  '申': '金', '酉': '金', '戌': '土', '亥': '水',
+}
+const WUXING_SHENG: Record<string, string> = { '金': '水', '水': '木', '木': '火', '火': '土', '土': '金' }
+const WUXING_KE: Record<string, string> = { '金': '木', '木': '土', '土': '水', '水': '火', '火': '金' }
+
+// 以宫的五行为准，判定某爻地支五行的六亲
+function getLiuqin(gongElement: string, yaoElement: string): string {
+  if (yaoElement === gongElement) return '兄弟'
+  if (WUXING_SHENG[gongElement] === yaoElement) return '子孙'
+  if (WUXING_KE[gongElement] === yaoElement) return '妻财'
+  if (WUXING_SHENG[yaoElement] === gongElement) return '父母'
+  if (WUXING_KE[yaoElement] === gongElement) return '官鬼'
+  return '兄弟'
+}
+
+// 卦的六爻纳甲地支（初至上）：下卦取本纳甲前三、上卦取后三
+function najiaOf(hexagram: Hexagram): string[] {
+  const upperNajia = NAJIA_GANZHI[hexagram.upperTrigram.name] || []
+  const lowerNajia = NAJIA_GANZHI[hexagram.lowerTrigram.name] || []
+  return [lowerNajia[0], lowerNajia[1], lowerNajia[2], upperNajia[3], upperNajia[4], upperNajia[5]]
+}
+
+const yaoElementOf = (naJia: string) => ZHI_WUXING[naJia?.slice(1) || ''] || '木'
 
 export function tossCoins(): { yin: boolean; changing: boolean } {
   const coins = [Math.random() > 0.5, Math.random() > 0.5, Math.random() > 0.5]
@@ -171,56 +198,37 @@ function getGongAndShiYing(upperId: number, lowerId: number): { gongId: number; 
   return { gongId: upperId, shi: 2, ying: 5 }
 }
 
-function calculateNajia(hexagram: Hexagram, _yaos: Yao[], dayGan: number): NajiaItem[] {
+function calculateNajia(hexagram: Hexagram, dayGan: number): { najia: NajiaItem[]; gongElement: string } {
   const najia: NajiaItem[] = []
   const { gongId, shi, ying } = getGongAndShiYing(hexagram.upperTrigram.id, hexagram.lowerTrigram.id)
-  const gongTrigram = TRIGRAMS[gongId - 1]
-  
-  const upperNajia = NAJIA_GANZHI[hexagram.upperTrigram.name] || []
-  const lowerNajia = NAJIA_GANZHI[hexagram.lowerTrigram.name] || []
-  
-  const gongElement = gongTrigram.element
-  const wuxingSheng: Record<string, string> = {
-    '金': '水', '水': '木', '木': '火', '火': '土', '土': '金'
-  }
-  const wuxingKe: Record<string, string> = {
-    '金': '木', '木': '土', '土': '水', '水': '火', '火': '金'
-  }
-  
+  const gongElement = TRIGRAMS[gongId - 1].element
+  const naJiaArr = najiaOf(hexagram)
+
   const sixShenStartMap = [0, 0, 1, 1, 2, 3, 4, 4, 5, 5]
   const sixShenStart = sixShenStartMap[dayGan]
 
   for (let i = 0; i < 6; i++) {
-    const isUpper = i >= 3
-    const naJia = isUpper ? upperNajia[i] : lowerNajia[i]
-    
-    const zhi = naJia?.slice(1) || ''
-    const zhiWuxing: Record<string, string> = {
-      '子': '水', '丑': '土', '寅': '木', '卯': '木',
-      '辰': '土', '巳': '火', '午': '火', '未': '土',
-      '申': '金', '酉': '金', '戌': '土', '亥': '水',
-    }
-    const yaoElement = zhiWuxing[zhi] || '木'
-    
-    let sixQin = '兄弟'
-    if (yaoElement === gongElement) sixQin = '兄弟'
-    else if (wuxingSheng[gongElement] === yaoElement) sixQin = '子孙'
-    else if (wuxingKe[gongElement] === yaoElement) sixQin = '妻财'
-    else if (wuxingSheng[yaoElement] === gongElement) sixQin = '父母'
-    else if (wuxingKe[yaoElement] === gongElement) sixQin = '官鬼'
-    
-    const sixShenIndex = (sixShenStart + i) % 6
+    const naJia = naJiaArr[i]
     najia.push({
       position: i,
-      sixQin,
-      sixShen: SIX_SHEN[sixShenIndex],
+      sixQin: getLiuqin(gongElement, yaoElementOf(naJia)),
+      sixShen: SIX_SHEN[(sixShenStart + i) % 6],
       naJia,
       shi: i === shi,
       ying: i === ying,
     })
   }
-  
-  return najia
+
+  return { najia, gongElement }
+}
+
+// 变卦纳甲与六亲：纳甲取变卦本身，六亲仍以本卦之宫五行为准（回头生克）
+function calculateChangedNajia(changed: Hexagram, gongElement: string): ChangedNajiaItem[] {
+  return najiaOf(changed).map((naJia, i) => ({
+    position: i,
+    naJia,
+    sixQin: getLiuqin(gongElement, yaoElementOf(naJia)),
+  }))
 }
 
 const YAO_POSITION_LABELS = ['初', '二', '三', '四', '五', '上']
@@ -267,7 +275,8 @@ export function createDivination(
   const selected = new Date(`${date}T${hh}:00:00`)
   const ganZhiDate = isNaN(selected.getTime()) ? new Date() : selected
   const { dayGanZhi, dayGan, monthJian, xunKong } = getGanZhiInfo(ganZhiDate)
-  const najia = calculateNajia(original, originalYao, dayGan)
+  const { najia, gongElement } = calculateNajia(original, dayGan)
+  const changedNajia = changed ? calculateChangedNajia(changed, gongElement) : null
 
   return {
     id: crypto.randomUUID(),
@@ -279,6 +288,7 @@ export function createDivination(
     original,
     changed,
     najia,
+    changedNajia,
     dayGanZhi,
     monthJian,
     xunKong,
