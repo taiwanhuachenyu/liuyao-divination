@@ -6,6 +6,7 @@ interface DivinationState {
   yaos: (Yao | null)[]
   question: string
   date: string
+  hour: number
   method: 'coins' | 'manual' | 'time'
   currentStep: number
   isFlipping: boolean
@@ -15,6 +16,7 @@ interface DivinationState {
   aiLoading: boolean
   setQuestion: (q: string) => void
   setDate: (d: string) => void
+  setHour: (h: number) => void
   setMethod: (m: 'coins' | 'manual' | 'time') => void
   addYao: (yin: boolean, changing: boolean) => void
   setYao: (index: number, yin: boolean, changing: boolean) => void
@@ -29,7 +31,8 @@ interface DivinationState {
   setAiLoading: (loading: boolean) => void
 }
 
-const today = new Date().toISOString().split('T')[0]
+const now = new Date()
+const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
 export const useDivinationStore = create<DivinationState>()(
   persist(
@@ -37,6 +40,7 @@ export const useDivinationStore = create<DivinationState>()(
       yaos: Array(6).fill(null),
       question: '',
       date: today,
+      hour: now.getHours(),
       method: 'coins',
       currentStep: 0,
       isFlipping: false,
@@ -46,6 +50,7 @@ export const useDivinationStore = create<DivinationState>()(
       aiLoading: false,
       setQuestion: (q) => set({ question: q }),
       setDate: (d) => set({ date: d }),
+      setHour: (h) => set({ hour: h }),
       setMethod: (m) => set({ method: m, yaos: Array(6).fill(null), currentStep: 0 }),
       addYao: (yin, changing) => set((state) => {
         const newYaos = [...state.yaos]

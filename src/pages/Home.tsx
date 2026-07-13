@@ -9,6 +9,23 @@ import HistoryDrawer from '../components/HistoryDrawer'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
 const COIN_RESTING_FACES = [true, false, true]
+// 十二时辰（取每个时辰的代表小时，用于时间起卦与干支推算）
+const SHICHEN = [
+  { name: '子时', range: '23–01', hour: 0 },
+  { name: '丑时', range: '01–03', hour: 2 },
+  { name: '寅时', range: '03–05', hour: 4 },
+  { name: '卯时', range: '05–07', hour: 6 },
+  { name: '辰时', range: '07–09', hour: 8 },
+  { name: '巳时', range: '09–11', hour: 10 },
+  { name: '午时', range: '11–13', hour: 12 },
+  { name: '未时', range: '13–15', hour: 14 },
+  { name: '申时', range: '15–17', hour: 16 },
+  { name: '酉时', range: '17–19', hour: 18 },
+  { name: '戌时', range: '19–21', hour: 20 },
+  { name: '亥时', range: '21–23', hour: 22 },
+]
+// 小时 → 时辰序号（与 getHourZhi 一致：子时含跨夜 23–01）
+const hourToShichen = (h: number) => Math.floor(((h + 1) % 24) / 2)
 const METHOD_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   coins: { label: '铜钱摇卦', icon: <span className="text-lg">⚂</span> },
   manual: { label: '手动选卦', icon: <span className="text-lg">☯</span> },
@@ -20,8 +37,8 @@ export default function Home() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [coinResults, setCoinResults] = useState<boolean[] | null>(null)
   const {
-    yaos, question, date, method, currentStep, isFlipping,
-    setQuestion, setDate, setMethod, addYao, setYao, setIsFlipping, 
+    yaos, question, date, hour, method, currentStep, isFlipping,
+    setQuestion, setDate, setHour, setMethod, addYao, setYao, setIsFlipping,
     setResult, reset
   } = useDivinationStore()
 
@@ -79,8 +96,8 @@ export default function Home() {
   }
 
   const handleTimeDivination = () => {
-    const timeYaos = timeDivination(date)
-    const result = createDivination(timeYaos, question || '天机起卦', date, 'time')
+    const timeYaos = timeDivination(date, hour)
+    const result = createDivination(timeYaos, question || '天机起卦', date, 'time', hour)
     setResult(result)
     navigate('/result')
   }
@@ -311,10 +328,37 @@ export default function Home() {
                 </p>
               </div>
               
-              <div className="bg-paper-dark/30 rounded-lg p-4 md:p-6 mb-6 md:mb-8 inline-block">
+              <div className="bg-paper-dark/30 rounded-lg p-4 md:p-6 mb-5 md:mb-6 inline-block">
                 <div className="flex items-center justify-center gap-3 text-ink-light text-sm md:text-base">
                   <Clock size={18} />
-                  <span>选定时间：<span className="text-ink text-base md:text-lg">{date}</span></span>
+                  <span>选定时辰：
+                    <span className="text-ink text-base md:text-lg">{date}</span>
+                    <span className="text-cinnabar text-base md:text-lg mx-1">{SHICHEN[hourToShichen(hour)].name}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-6 md:mb-8">
+                <p className="text-xs md:text-sm text-ink-light mb-3 tracking-wide">◆ 选择时辰</p>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-w-lg mx-auto">
+                  {SHICHEN.map((sc, i) => {
+                    const selected = hourToShichen(hour) === i
+                    return (
+                      <button
+                        key={sc.name}
+                        onClick={() => setHour(sc.hour)}
+                        className={`px-1 py-1.5 md:py-2 rounded-lg border transition-all text-xs md:text-sm ${
+                          selected
+                            ? 'bg-cinnabar text-paper border-cinnabar shadow-md'
+                            : 'border-paper-dark hover:border-cinnabar text-ink-light hover:text-ink'
+                        }`}
+                        title={`${sc.range} 时`}
+                      >
+                        <div>{sc.name}</div>
+                        <div className={`text-[9px] md:text-[10px] ${selected ? 'text-paper/80' : 'text-ink-light/60'}`}>{sc.range}</div>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

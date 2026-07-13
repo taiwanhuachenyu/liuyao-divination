@@ -255,14 +255,16 @@ export function createDivination(
   originalYao: Yao[],
   question: string,
   date: string,
-  method: 'coins' | 'manual' | 'time'
+  method: 'coins' | 'manual' | 'time',
+  hour?: number
 ): Divination {
   const yaoBools = originalYao.map(y => y.yin)
   const original = getHexagramFromYaos(yaoBools)
   const { hexagram: changed, changedYaos } = getChangedHexagram(originalYao)
 
-  // 日辰、月建、旬空、六神均以起卦所选日期推算，而非当前时刻
-  const selected = new Date(`${date}T12:00:00`)
+  // 日辰、月建、旬空、六神均以起卦所选日期（天机起卦含时辰）推算，而非当前时刻
+  const hh = hour != null ? String(hour).padStart(2, '0') : '12'
+  const selected = new Date(`${date}T${hh}:00:00`)
   const ganZhiDate = isNaN(selected.getTime()) ? new Date() : selected
   const { dayGanZhi, dayGan, monthJian, xunKong } = getGanZhiInfo(ganZhiDate)
   const najia = calculateNajia(original, originalYao, dayGan)
