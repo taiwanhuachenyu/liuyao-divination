@@ -25,6 +25,7 @@ export interface Hexagram {
   lowerTrigram: Trigram
   judgment: string
   lines: LineText[]
+  interpretation?: string
   tuan?: string
   xiang?: string
 }
