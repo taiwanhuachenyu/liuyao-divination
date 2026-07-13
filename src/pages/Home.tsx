@@ -32,9 +32,17 @@ export default function Home() {
   useEffect(() => {
     if (method !== 'coins' || isFlipping) return
     if (currentStep >= 6) {
-      setTimeout(() => generateResult(), 500)
+      setTimeout(() => {
+        const state = useDivinationStore.getState()
+        const completeYaos = state.yaos.filter((y): y is NonNullable<typeof y> => y !== null)
+        if (completeYaos.length === 6) {
+          const result = createDivination(completeYaos, state.question, state.date, state.method)
+          state.setResult(result)
+          navigate('/result')
+        }
+      }, 500)
     }
-  }, [currentStep, isFlipping, method])
+  }, [currentStep, isFlipping, method, navigate])
 
   const handleMethodChange = (m: 'coins' | 'manual' | 'time') => {
     reset()
