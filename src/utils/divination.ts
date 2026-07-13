@@ -19,8 +19,8 @@ export function tossCoins(): { yin: boolean; changing: boolean } {
   const heads = coins.filter(c => c).length
   if (heads === 0) return { yin: false, changing: true }
   if (heads === 3) return { yin: true, changing: true }
-  if (heads === 1) return { yin: true, changing: false }
-  return { yin: false, changing: false }
+  if (heads === 2) return { yin: false, changing: false }
+  return { yin: true, changing: false }
 }
 
 function getHourZhi(hour: number): number {
@@ -133,7 +133,7 @@ function getGongAndShiYing(upperId: number, lowerId: number): { gongId: number; 
     c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]; c[4] = !c[4]; c[3] = !c[3]
     if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 3, ying: 0 }
     
-    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]
+    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]
     if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 2, ying: 5 }
   }
 
