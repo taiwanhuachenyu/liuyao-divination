@@ -1,3 +1,4 @@
+import { Solar } from 'lunar-typescript'
 import { Yao, Hexagram, NajiaItem, Divination } from '../types'
 import { getTrigramFromYaos, TRIGRAM_YAO_MAP, TRIGRAMS } from '../data/trigrams'
 import { HEXAGRAMS } from '../data/hexagrams'
@@ -15,13 +16,6 @@ const NAJIA_GANZHI: Record<string, string[]> = {
 }
 
 const TIAN_GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']
-const DI_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
-
-// 六甲旬空亡（按旬序：甲子、甲戌、甲申、甲午、甲辰、甲寅）
-// 甲子旬空戌亥、甲戌旬空申酉、甲申旬空午未、甲午旬空辰巳、甲辰旬空寅卯、甲寅旬空子丑
-const XUN_KONG: [number, number][] = [
-  [10, 11], [0, 1], [2, 3], [4, 5], [6, 7], [8, 9]
-]
 
 export function tossCoins(): { yin: boolean; changing: boolean } {
   const coins = [Math.random() > 0.5, Math.random() > 0.5, Math.random() > 0.5]
@@ -47,59 +41,29 @@ function getHourZhi(hour: number): number {
   return 11
 }
 
-function getSolarTerms(year: number): { name: string; index: number }[] {
-  const termNames = ['小寒', '大寒', '立春', '雨水', '惊蛰', '春分', '清明', '谷雨', '立夏', '小满', '芒种', '夏至', '小暑', '大暑', '立秋', '处暑', '白露', '秋分', '寒露', '霜降', '立冬', '小雪', '大雪', '冬至']
-  const baseDate = new Date(1900, 0, 6, 2, 5)
-  const terms: { name: string; index: number }[] = []
-  let y = 1900
-  while (y <= year + 1) {
-    for (let i = 0; i < 24; i++) {
-      const offset = (y - 1900) * 365.2422 * 24 * 60 + i * 15.22 * 24 * 60
-      const termDate = new Date(baseDate.getTime() + offset * 60 * 1000)
-      if (termDate.getFullYear() === year) {
-        terms.push({ name: termNames[i], index: i })
-      }
-    }
-    y++
-  }
-  return terms.sort((a, b) => a.index - b.index)
+interface GanZhiInfo {
+  dayGanZhi: string   // 日辰，如「戊子」
+  dayGan: number      // 日干序号（0=甲…9=癸），供六神起法使用
+  monthJian: string   // 月建，以节气为界，如「未月」
+  xunKong: string     // 旬空，如「午未空」
 }
 
-function getGanZhi(date: Date): { yearGan: number; yearZhi: number; monthGan: number; monthZhi: number; dayGan: number; dayZhi: number } {
-  const baseDate = new Date(1900, 0, 1)
-  const baseDayGan = 0  // 1900-01-01 为甲戌日：天干甲
-  const baseDayZhi = 10 // 1900-01-01 为甲戌日：地支戌
-  const daysDiff = Math.floor((date.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24))
-  let dayGan = (baseDayGan + daysDiff) % 10
-  let dayZhi = (baseDayZhi + daysDiff) % 12
-  if (dayGan < 0) dayGan += 10
-  if (dayZhi < 0) dayZhi += 12
-
-  const year = date.getFullYear()
-  let yearGan = (year - 4) % 10
-  let yearZhi = (year - 4) % 12
-  if (yearGan < 0) yearGan += 10
-  if (yearZhi < 0) yearZhi += 12
-
-  const terms = getSolarTerms(year)
-  let monthZhi = 1
-  for (let i = 0; i < terms.length; i++) {
-    if (terms[i].index >= 2 && terms[i].index <= 23) {
-      const termDate = new Date(year, Math.floor(terms[i].index / 2), 4 + Math.floor(terms[i].index % 2) * 15)
-      if (date < termDate) break
-      monthZhi = (Math.floor((terms[i].index - 2) / 2) + 2) % 12
-    }
+// 以 lunar-typescript 精确推算日辰、月建（按节气）与旬空，取代原有近似算法
+function getGanZhiInfo(date: Date): GanZhiInfo {
+  const solar = Solar.fromYmdHms(
+    date.getFullYear(), date.getMonth() + 1, date.getDate(),
+    date.getHours(), date.getMinutes(), date.getSeconds()
+  )
+  const lunar = solar.getLunar()
+  const dayGanZhi = lunar.getDayInGanZhi()
+  const dayGan = Math.max(0, TIAN_GAN.indexOf(dayGanZhi.charAt(0)))
+  const monthZhi = lunar.getMonthInGanZhiExact().charAt(1) // 月建地支，以节为界
+  return {
+    dayGanZhi,
+    dayGan,
+    monthJian: monthZhi + '月',
+    xunKong: lunar.getDayXunKong() + '空', // getDayXunKong 返回如「午未」
   }
-
-  const monthGan = ((yearGan % 5) * 2 + 2 + monthZhi - 2) % 10
-
-  return { yearGan, yearZhi, monthGan, monthZhi, dayGan, dayZhi }
-}
-
-function getXunKong(dayGan: number, dayZhi: number): [number, number] {
-  const diff = (dayZhi - dayGan + 12) % 12
-  const xun = Math.floor(diff / 2)
-  return XUN_KONG[xun]
 }
 
 function trigramIdToYaos(id: number): boolean[] {
@@ -296,18 +260,13 @@ export function createDivination(
   // 日辰、月建、旬空、六神均以起卦所选日期推算，而非当前时刻
   const selected = new Date(`${date}T12:00:00`)
   const ganZhiDate = isNaN(selected.getTime()) ? new Date() : selected
-  const ganZhi = getGanZhi(ganZhiDate)
-  const najia = calculateNajia(original, originalYao, ganZhi.dayGan)
-  
-  const dayGanZhi = TIAN_GAN[ganZhi.dayGan] + DI_ZHI[ganZhi.dayZhi]
-  const monthJian = DI_ZHI[ganZhi.monthZhi] + '月'
-  const xunKong = getXunKong(ganZhi.dayGan, ganZhi.dayZhi)
-  const xunKongStr = DI_ZHI[xunKong[0]] + DI_ZHI[xunKong[1]] + '空'
+  const { dayGanZhi, dayGan, monthJian, xunKong } = getGanZhiInfo(ganZhiDate)
+  const najia = calculateNajia(original, originalYao, dayGan)
 
   return {
     id: crypto.randomUUID(),
     question,
-    date: `${date} ${dayGanZhi}日 ${monthJian} ${xunKongStr}`,
+    date: `${date} ${dayGanZhi}日 ${monthJian} ${xunKong}`,
     method,
     originalYao,
     changedYao: changed ? changedYaos : originalYao.map(y => ({ ...y, changing: false })),
@@ -316,7 +275,7 @@ export function createDivination(
     najia,
     dayGanZhi,
     monthJian,
-    xunKong: xunKongStr,
+    xunKong,
     created: Date.now(),
   }
 }
