@@ -2,12 +2,7 @@ import { Divination } from '../types'
 
 const API_ENDPOINT = 'https://apihub.agnes-ai.com/v1/chat/completions'
 const MODEL = 'agnes-2.0-flash'
-
-function decryptKey(pwd: string): string | null {
-  if (!pwd || pwd.trim() === '') return atob('c2stVXNsYTQ5MHhhUFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVlMDRIMmo2')
-  if (pwd === 'yike') return atob('c2stVXNsYTQ5MHhhUFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVlMDRIMmo2')
-  return pwd
-}
+const API_KEY = atob('c2stVXNsYTQ5MHhhUFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVlMDRIMmo2')
 
 function buildPrompt(divination: Divination, question: string): string {
   const { original, changed, originalYao, method, najia } = divination
@@ -44,22 +39,15 @@ export interface StreamCallbacks {
 }
 
 export async function aiDivination(
-  apiKey: string,
   divination: Divination,
   question: string,
   callbacks: StreamCallbacks
 ): Promise<void> {
-  const key = decryptKey(apiKey.trim())
-  if (!key) {
-    callbacks.onError('API密钥无效')
-    return
-  }
-
   try {
     const response = await fetch(API_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${key}`,
+        'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

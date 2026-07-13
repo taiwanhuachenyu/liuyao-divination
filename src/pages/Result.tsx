@@ -1,17 +1,14 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, Key, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, RefreshCw } from 'lucide-react'
 import { useDivinationStore } from '../store/useDivinationStore'
 import { getHexagramInterpretation } from '../utils/divination'
 import { aiDivination } from '../utils/ai'
-import ApiKeyModal from '../components/ApiKeyModal'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
 
 export default function Result() {
   const navigate = useNavigate()
-  const { result, reset, aiApiKey, aiInterpretation, aiLoading, appendAiInterpretation, setAiInterpretation, setAiLoading } = useDivinationStore()
-  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false)
+  const { result, reset, aiInterpretation, aiLoading, appendAiInterpretation, setAiInterpretation, setAiLoading } = useDivinationStore()
 
   if (!result) {
     return (
@@ -59,17 +56,13 @@ export default function Result() {
   }
 
   const handleAiDivination = async () => {
-    if (!aiApiKey || aiApiKey.trim() === '') {
-      setApiKeyModalOpen(true)
-      return
-    }
     setAiInterpretation('')
     setAiLoading(true)
-    await aiDivination(aiApiKey, result, question, {
+    await aiDivination(result, question, {
       onToken: (token) => appendAiInterpretation(token),
       onDone: () => setAiLoading(false),
       onError: (err) => {
-        setAiInterpretation(`AI解卦出错：${err}`)
+        setAiInterpretation(`解卦出错：${err}，请稍后重试`)
         setAiLoading(false)
       }
     })
@@ -282,7 +275,7 @@ export default function Result() {
           <h3 className="text-xl md:text-2xl mb-4 md:mb-6 text-cinnabar flex items-center gap-2 md:gap-3 tracking-widest">
             <span className="w-1 h-6 md:h-8 bg-cinnabar rounded-full" />
             <Sparkles size={22} className="md:w-[28px] md:h-[28px]" />
-            AI 大 师 解 卦
+            Claude 智 能 解 卦
           </h3>
           
           {!aiInterpretation && !aiLoading ? (
@@ -304,7 +297,7 @@ export default function Result() {
                   <div className="w-10 h-10 border-4 border-cinnabar/30 border-t-cinnabar rounded-full animate-spin"></div>
                 </div>
               </div>
-              <p className="text-ink-light text-lg">AI大师凝神静气，推演卦象中...</p>
+              <p className="text-ink-light text-lg">Claude大师凝神静气，推演卦象中...</p>
               <p className="text-ink-light/60 text-sm mt-2">请稍候片刻</p>
             </div>
           ) : (
@@ -326,13 +319,6 @@ export default function Result() {
                 >
                   <RefreshCw size={16} />
                   重新解读
-                </button>
-                <button 
-                  onClick={() => setApiKeyModalOpen(true)}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
-                >
-                  <Key size={16} />
-                  API设置
                 </button>
               </div>
             </div>
@@ -407,7 +393,6 @@ export default function Result() {
           <p className="mt-1">积善之家必有余庆 积不善之家必有余殃</p>
         </footer>
       </main>
-      <ApiKeyModal open={apiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} />
     </div>
   )
 }

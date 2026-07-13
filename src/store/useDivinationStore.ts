@@ -11,7 +11,6 @@ interface DivinationState {
   isFlipping: boolean
   result: Divination | null
   history: Divination[]
-  aiApiKey: string
   aiInterpretation: string
   aiLoading: boolean
   setQuestion: (q: string) => void
@@ -25,7 +24,6 @@ interface DivinationState {
   setCurrentStep: (s: number) => void
   loadFromHistory: (d: Divination) => void
   deleteHistory: (id: string) => void
-  setAiApiKey: (key: string) => void
   appendAiInterpretation: (token: string) => void
   setAiInterpretation: (text: string) => void
   setAiLoading: (loading: boolean) => void
@@ -44,7 +42,6 @@ export const useDivinationStore = create<DivinationState>()(
       isFlipping: false,
       result: null,
       history: [],
-      aiApiKey: '',
       aiInterpretation: '',
       aiLoading: false,
       setQuestion: (q) => set({ question: q }),
@@ -73,14 +70,13 @@ export const useDivinationStore = create<DivinationState>()(
       deleteHistory: (id) => set((state) => ({
         history: state.history.filter(h => h.id !== id)
       })),
-      setAiApiKey: (key) => set({ aiApiKey: key }),
       appendAiInterpretation: (token) => set((state) => ({ aiInterpretation: state.aiInterpretation + token })),
       setAiInterpretation: (text) => set({ aiInterpretation: text }),
       setAiLoading: (loading) => set({ aiLoading: loading }),
     }),
     {
       name: 'liuyao-storage',
-      partialize: (state) => ({ history: state.history, aiApiKey: state.aiApiKey }),
+      partialize: (state) => ({ history: state.history }),
     }
   )
 )
