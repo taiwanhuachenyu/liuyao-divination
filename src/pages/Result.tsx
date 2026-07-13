@@ -279,59 +279,67 @@ export default function Result() {
         </div>
 
         <div className="paper-card p-4 md:p-8 mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '320ms' }}>
-          <div className="flex items-center justify-between mb-4 md:mb-6">
-            <h3 className="text-xl md:text-2xl text-cinnabar flex items-center gap-2 md:gap-3 tracking-widest">
-              <Sparkles size={22} className="md:w-[28px] md:h-[28px]" />
-              AI 智 能 解 卦
-            </h3>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => setApiKeyModalOpen(true)}
-                className="p-2 hover:bg-paper-dark rounded-full transition-all" 
-                title="设置API密钥"
-              >
-                <Key size={18} className="text-ink-light" />
-              </button>
-              {aiInterpretation && !aiLoading && (
-                <button 
-                  onClick={handleAiDivination}
-                  className="p-2 hover:bg-paper-dark rounded-full transition-all" 
-                  title="重新解读"
-                >
-                  <RefreshCw size={18} className="text-ink-light" />
-                </button>
-              )}
-            </div>
-          </div>
+          <h3 className="text-xl md:text-2xl mb-4 md:mb-6 text-cinnabar flex items-center gap-2 md:gap-3 tracking-widest">
+            <span className="w-1 h-6 md:h-8 bg-cinnabar rounded-full" />
+            <Sparkles size={22} className="md:w-[28px] md:h-[28px]" />
+            AI 大 师 解 卦
+          </h3>
           
           {!aiInterpretation && !aiLoading ? (
-            <div className="text-center py-8">
-              <p className="text-ink-light mb-5">点击下方按钮，AI大师为您详细解读卦象</p>
+            <div className="text-center py-8 md:py-10">
+              <div className="text-5xl md:text-6xl mb-4 opacity-30">☯</div>
+              <p className="text-ink-light mb-6 text-lg md:text-xl">天机已显，请AI大师为您详解卦象吉凶</p>
               <button 
                 onClick={handleAiDivination}
-                className="seal-button-primary px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl"
+                className="seal-button-primary px-10 md:px-16 py-3 md:py-4 text-lg md:text-xl tracking-widest"
               >
-                ✨ AI 大师解卦
+                ✨ 请 大 师 解 卦
               </button>
-              <p className="text-xs text-ink-light/60 mt-4">
-                内置密钥，无需配置即可使用
-              </p>
             </div>
           ) : aiLoading ? (
-            <div className="text-center py-8">
-              <div className="inline-block mb-4">
-                <div className="w-10 h-10 border-4 border-cinnabar/30 border-t-cinnabar rounded-full animate-spin mx-auto"></div>
+            <div className="text-center py-10 md:py-12">
+              <div className="relative w-16 h-16 mx-auto mb-5">
+                <div className="absolute inset-0 text-5xl opacity-20 animate-pulse">☯</div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-10 h-10 border-4 border-cinnabar/30 border-t-cinnabar rounded-full animate-spin"></div>
+                </div>
               </div>
-              <p className="text-ink-light">AI大师正在解析卦象...</p>
+              <p className="text-ink-light text-lg">AI大师凝神静气，推演卦象中...</p>
+              <p className="text-ink-light/60 text-sm mt-2">请稍候片刻</p>
             </div>
           ) : (
-            <div className="bg-paper-dark/20 rounded-xl p-5 md:p-6">
-              <p className="text-base md:text-lg leading-loose text-ink whitespace-pre-wrap">
-                {aiInterpretation}
-                <span className="inline-block w-2 h-5 bg-cinnabar/70 ml-1 animate-pulse"></span>
-              </p>
+            <div>
+              <div className="relative bg-gradient-to-br from-paper-dark/40 to-paper-dark/10 rounded-xl p-5 md:p-7 border border-cinnabar/10">
+                <div className="absolute -top-3 left-6 bg-paper px-2 text-cinnabar text-sm tracking-widest">卦象解读</div>
+                <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-cinnabar/40"></div>
+                <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-cinnabar/40"></div>
+                <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-cinnabar/40"></div>
+                <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-cinnabar/40"></div>
+                <p className="text-base md:text-lg leading-loose text-ink whitespace-pre-wrap indent-8">
+                  {aiInterpretation}
+                </p>
+              </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <button 
+                  onClick={handleAiDivination}
+                  className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
+                >
+                  <RefreshCw size={16} />
+                  重新解读
+                </button>
+                <button 
+                  onClick={() => setApiKeyModalOpen(true)}
+                  className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
+                >
+                  <Key size={16} />
+                  API设置
+                </button>
+              </div>
             </div>
           )}
+          <p className="mt-5 md:mt-6 text-center text-ink-light/60 text-xs md:text-sm italic">
+            —— AI解读仅供参考，易理无穷，心法为要 ——
+          </p>
         </div>
 
         <div className="paper-card p-4 md:p-8 animate-fade-in" style={{ animationDelay: '350ms' }}>
