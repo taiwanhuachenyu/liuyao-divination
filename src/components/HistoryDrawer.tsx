@@ -30,7 +30,7 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
       />
       <div className={`fixed top-0 right-0 h-full w-80 bg-paper shadow-2xl z-50 transform transition-transform duration-300 border-l border-paper-dark ${open ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-4 border-b border-paper-dark flex items-center justify-between">
-          <h2 className="text-xl font-kai text-ink">历史记录</h2>
+          <h2 className="text-xl text-ink">历史记录</h2>
           <button onClick={onClose} className="p-2 hover:bg-paper-dark rounded-full transition-colors">
             <X size={20} />
           </button>

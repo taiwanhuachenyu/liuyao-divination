@@ -15,7 +15,7 @@ export default function Result() {
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="bagua-decoration text-[200px] opacity-5 yin-yang-spin">☯</div>
         <div className="text-center relative z-10">
-          <p className="text-ink-light mb-6 font-kai text-xl">暂无排盘结果</p>
+          <p className="text-ink-light mb-6 text-xl">暂无排盘结果</p>
           <button onClick={() => navigate('/')} className="seal-button-primary px-8 py-3 text-lg">
             返回起卦
           </button>
@@ -62,16 +62,16 @@ export default function Result() {
         <div className="trigram-symbol">{original.symbol}</div>
       </div>
 
-      <header className="max-w-5xl mx-auto mb-8 relative z-10">
+      <header className="max-w-5xl mx-auto mb-8 relative z-50">
         <div className="flex items-center justify-between">
           <button 
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-ink-light hover:text-ink transition-all hover:gap-3 font-kai text-lg"
+            className="flex items-center gap-2 text-ink-light hover:text-ink transition-all hover:gap-3 text-lg"
           >
             <ArrowLeft size={22} />
             返回起卦
           </button>
-          <h1 className="text-4xl font-kai text-ink tracking-[0.3em] text-shadow-glow glow-text">
+          <h1 className="text-4xl text-ink tracking-[0.3em] text-shadow-glow glow-text">
             卦象详情
           </h1>
           <div className="flex gap-1">
@@ -90,23 +90,23 @@ export default function Result() {
         <div className="paper-card p-8 mb-6 animate-fade-in">
           <div className="grid md:grid-cols-3 gap-6 text-center">
             <div className="p-4 rounded-lg bg-paper-dark/20">
-              <div className="text-sm text-ink-light font-kai tracking-wide mb-2">◆ 占问事项</div>
-              <div className="text-xl mt-1 font-kai text-ink">{question || '（未填写）'}</div>
+              <div className="text-sm text-ink-light tracking-wide mb-2">◆ 占问事项</div>
+              <div className="text-xl mt-1 text-ink">{question || '（未填写）'}</div>
             </div>
             <div className="p-4 rounded-lg bg-paper-dark/20">
-              <div className="text-sm text-ink-light font-kai tracking-wide mb-2">◆ 占问时间</div>
+              <div className="text-sm text-ink-light tracking-wide mb-2">◆ 占问时间</div>
               <div className="text-xl mt-1">{date}</div>
             </div>
             <div className="p-4 rounded-lg bg-paper-dark/20">
-              <div className="text-sm text-ink-light font-kai tracking-wide mb-2">◆ 起卦方式</div>
-              <div className="text-xl mt-1 font-kai text-cinnabar">{methodName}</div>
+              <div className="text-sm text-ink-light tracking-wide mb-2">◆ 起卦方式</div>
+              <div className="text-xl mt-1 text-cinnabar">{methodName}</div>
             </div>
           </div>
         </div>
 
         <div className="text-center mb-8 animate-fade-in" style={{ animationDelay: '100ms' }}>
           <div className="divider-ornament">
-            <span className="px-6 font-kai text-ink-light text-lg tracking-widest">
+            <span className="px-6 text-ink-light text-lg tracking-widest">
               {original.name}{changed && <span className="mx-2 text-ocher">之</span>}{changed && changed.name}
             </span>
           </div>
@@ -115,16 +115,16 @@ export default function Result() {
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div className="paper-card p-8 animate-slide-up relative overflow-hidden">
             <div className="absolute top-0 right-0 text-8xl opacity-5">{original.symbol}</div>
-            <h3 className="text-2xl font-kai text-center mb-6 text-cinnabar tracking-widest">本 卦</h3>
+            <h3 className="text-2xl text-center mb-6 text-cinnabar tracking-widest">本 卦</h3>
             <div className="text-center mb-8">
               <div className="text-7xl mb-4 text-ink">{original.symbol}</div>
-              <div className="text-3xl font-kai text-ink glow-text">{original.name}</div>
-              <div className="text-ink-light mt-3 font-kai text-lg">
+              <div className="text-3xl text-ink glow-text">{original.name}</div>
+              <div className="text-ink-light mt-3 text-lg">
                 <span className="trigram-symbol mr-2">{original.upperTrigram.symbol}</span>上{original.upperTrigram.name}
                 <span className="mx-3 text-ink">|</span>
                 <span className="trigram-symbol mr-2">{original.lowerTrigram.symbol}</span>下{original.lowerTrigram.name}
               </div>
-              <div className="text-ink-light/70 mt-1 text-sm font-kai">
+              <div className="text-ink-light/70 mt-1 text-sm">
                 {original.upperTrigram.nature}{original.lowerTrigram.nature} | {original.upperTrigram.element}{original.lowerTrigram.element}
               </div>
             </div>
@@ -135,7 +135,7 @@ export default function Result() {
                 return (
                   <div key={pos} className="relative flex items-center w-full max-w-sm justify-center my-2.5" style={{ animationDelay: `${idx * 80}ms` }}>
                     <div className="absolute left-0 text-right w-24">
-                      <div className="text-sm text-ocher font-kai">{info.sixShen}</div>
+                      <div className="text-sm text-ocher">{info.sixShen}</div>
                       <div className="text-xs text-indigo">{info.naJia}</div>
                     </div>
                     <div className="relative">
@@ -153,14 +153,14 @@ export default function Result() {
                         </div>
                       )}
                       {info.shi && (
-                        <div className="absolute -left-16 top-1/2 -translate-y-1/2 text-cinnabar text-lg font-bold font-kai">世</div>
+                        <div className="absolute -left-16 top-1/2 -translate-y-1/2 text-cinnabar text-lg font-bold">世</div>
                       )}
                       {info.ying && (
-                        <div className="absolute -left-16 top-1/2 -translate-y-1/2 text-indigo text-lg font-bold font-kai">应</div>
+                        <div className="absolute -left-16 top-1/2 -translate-y-1/2 text-indigo text-lg font-bold">应</div>
                       )}
                     </div>
                     <div className="absolute right-0 text-left w-24">
-                      <div className="text-cinnabar font-kai">{info.sixQin}</div>
+                      <div className="text-cinnabar">{info.sixQin}</div>
                       <div className="text-xs text-ink-light">{YAO_LABELS[pos]}{yao.yin ? '六' : '九'}</div>
                     </div>
                   </div>
@@ -172,16 +172,16 @@ export default function Result() {
           {changed ? (
             <div className="paper-card p-8 animate-slide-up relative overflow-hidden" style={{ animationDelay: '150ms' }}>
               <div className="absolute top-0 right-0 text-8xl opacity-5">{changed.symbol}</div>
-              <h3 className="text-2xl font-kai text-center mb-6 text-ocher tracking-widest">变 卦</h3>
+              <h3 className="text-2xl text-center mb-6 text-ocher tracking-widest">变 卦</h3>
               <div className="text-center mb-8">
                 <div className="text-7xl mb-4 text-ink/80">{changed.symbol}</div>
-                <div className="text-3xl font-kai text-ink">{changed.name}</div>
-                <div className="text-ink-light mt-3 font-kai text-lg">
+                <div className="text-3xl text-ink">{changed.name}</div>
+                <div className="text-ink-light mt-3 text-lg">
                   <span className="trigram-symbol mr-2">{changed.upperTrigram.symbol}</span>上{changed.upperTrigram.name}
                   <span className="mx-3 text-ink">|</span>
                   <span className="trigram-symbol mr-2">{changed.lowerTrigram.symbol}</span>下{changed.lowerTrigram.name}
                 </div>
-                <div className="text-ink-light/70 mt-1 text-sm font-kai">
+                <div className="text-ink-light/70 mt-1 text-sm">
                   {changed.upperTrigram.nature}{changed.lowerTrigram.nature} | {changed.upperTrigram.element}{changed.lowerTrigram.element}
                 </div>
               </div>
@@ -199,12 +199,12 @@ export default function Result() {
                       ) : (
                         <div className={`h-4 w-28 rounded shadow-sm ${originalYaoHere.changing ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
                       )}
-                      <span className="ml-5 text-sm text-ink-light font-kai w-10">{YAO_LABELS[pos]}</span>
+                      <span className="ml-5 text-sm text-ink-light w-10">{YAO_LABELS[pos]}</span>
                     </div>
                   )
                 })}
               </div>
-              <p className="text-center text-ink-light mt-6 font-kai">
+              <p className="text-center text-ink-light mt-6">
                 <span className="px-3 py-1 bg-cinnabar/10 text-cinnabar rounded-full text-sm">
                   {changingYaos.length} 爻动
                 </span>
@@ -214,7 +214,7 @@ export default function Result() {
             <div className="paper-card p-8 animate-slide-up flex items-center justify-center" style={{ animationDelay: '150ms' }}>
               <div className="text-center">
                 <div className="text-6xl mb-4 opacity-30">☯</div>
-                <p className="text-ink-light font-kai text-lg">六爻安静，无变卦</p>
+                <p className="text-ink-light text-lg">六爻安静，无变卦</p>
                 <p className="text-sm text-ink-light/70 mt-2">以本卦卦辞断之</p>
               </div>
             </div>
@@ -222,24 +222,24 @@ export default function Result() {
         </div>
 
         <div className="paper-card p-8 mb-6 animate-fade-in scroll-paper" style={{ animationDelay: '250ms' }}>
-          <h3 className="text-2xl font-kai mb-6 text-cinnabar flex items-center gap-3 tracking-widest">
+          <h3 className="text-2xl mb-6 text-cinnabar flex items-center gap-3 tracking-widest">
             <BookOpen size={28} />
             卦 辞 经 典
           </h3>
           <div className="bg-paper-dark/20 rounded-xl p-8 mb-6 relative">
-            <div className="absolute -top-3 left-6 bg-paper px-3 text-cinnabar font-kai text-sm">本卦卦辞</div>
+            <div className="absolute -top-3 left-6 bg-paper px-3 text-cinnabar text-sm">本卦卦辞</div>
             <p className="judgment-text text-ink">{original.judgment}</p>
           </div>
           {changed && (
             <div className="bg-paper-dark/20 rounded-xl p-8 relative">
-              <div className="absolute -top-3 left-6 bg-paper px-3 text-ocher font-kai text-sm">变卦卦辞</div>
+              <div className="absolute -top-3 left-6 bg-paper px-3 text-ocher text-sm">变卦卦辞</div>
               <p className="judgment-text text-ink">{changed.judgment}</p>
             </div>
           )}
         </div>
 
         <div className="paper-card p-8 mb-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
-          <h3 className="text-2xl font-kai mb-6 text-cinnabar flex items-center gap-3 tracking-widest">
+          <h3 className="text-2xl mb-6 text-cinnabar flex items-center gap-3 tracking-widest">
             <Sparkles size={28} />
             卦 象 解 析
           </h3>
@@ -250,17 +250,17 @@ export default function Result() {
                 className="p-5 rounded-xl bg-gradient-to-r from-paper-dark/30 to-transparent border-l-4 border-cinnabar/30 hover:border-cinnabar transition-colors"
                 style={{ animationDelay: `${idx * 100}ms` }}
               >
-                <p className="font-kai text-lg leading-loose text-ink">{text}</p>
+                <p className="text-lg leading-loose text-ink">{text}</p>
               </div>
             ))}
           </div>
-          <p className="mt-6 text-center text-ink-light/60 text-sm font-kai italic">
+          <p className="mt-6 text-center text-ink-light/60 text-sm italic">
             —— 易者，变也。卦象仅供参考，吉凶悔吝，皆由心生 ——
           </p>
         </div>
 
         <div className="paper-card p-8 animate-fade-in" style={{ animationDelay: '350ms' }}>
-          <h3 className="text-2xl font-kai mb-6 text-cinnabar flex items-center gap-3 tracking-widest">
+          <h3 className="text-2xl mb-6 text-cinnabar flex items-center gap-3 tracking-widest">
             <span className="w-1 h-8 bg-cinnabar rounded-full" />
             爻 辞 详 解
           </h3>
@@ -279,29 +279,29 @@ export default function Result() {
                   style={{ animationDelay: `${idx * 80}ms` }}
                 >
                   <div className="flex items-center gap-3 mb-3 flex-wrap">
-                    <span className="font-kai text-cinnabar font-bold text-lg">
+                    <span className="text-cinnabar font-bold text-lg">
                       {YAO_LABELS[idx]}{yao.yin ? '六' : '九'}
                     </span>
-                    <span className="text-xs px-3 py-1 rounded-full bg-paper-dark text-ink-light font-kai">
+                    <span className="text-xs px-3 py-1 rounded-full bg-paper-dark text-ink-light">
                       {yaoTypeName(yao.yin, yao.changing)}
                     </span>
                     {isChanging && (
-                      <span className="text-xs px-3 py-1 rounded-full bg-cinnabar text-paper font-kai animate-pulse">
+                      <span className="text-xs px-3 py-1 rounded-full bg-cinnabar text-paper animate-pulse">
                         ★ 动爻
                       </span>
                     )}
                     {najia[idx].shi && (
-                      <span className="text-xs px-3 py-1 rounded-full bg-indigo/20 text-indigo font-kai">世爻</span>
+                      <span className="text-xs px-3 py-1 rounded-full bg-indigo/20 text-indigo">世爻</span>
                     )}
                     {najia[idx].ying && (
-                      <span className="text-xs px-3 py-1 rounded-full bg-ocher/20 text-ocher font-kai">应爻</span>
+                      <span className="text-xs px-3 py-1 rounded-full bg-ocher/20 text-ocher">应爻</span>
                     )}
-                    <span className="text-xs text-ocher font-kai ml-auto">{najia[idx].sixShen} {najia[idx].naJia} {najia[idx].sixQin}</span>
+                    <span className="text-xs text-ocher ml-auto">{najia[idx].sixShen} {najia[idx].naJia} {najia[idx].sixQin}</span>
                   </div>
-                  <p className="font-kai text-ink leading-relaxed text-lg">{line.text}</p>
+                  <p className="text-ink leading-relaxed text-lg">{line.text}</p>
                   {isChanging && changed && (
                     <div className="mt-4 pt-4 border-t border-paper-dark/50">
-                      <p className="text-ocher font-kai">
+                      <p className="text-ocher">
                         <span className="mr-2 text-sm">变爻 →</span>
                         <span className="text-base">{changed.lines[idx].text}</span>
                       </p>
@@ -319,7 +319,7 @@ export default function Result() {
           </button>
         </div>
 
-        <footer className="mt-12 text-center text-ink-light/50 text-sm font-kai">
+        <footer className="mt-12 text-center text-ink-light/50 text-sm">
           <p>六爻排盘 - 天机妙算</p>
           <p className="mt-1">积善之家必有余庆 积不善之家必有余殃</p>
         </footer>

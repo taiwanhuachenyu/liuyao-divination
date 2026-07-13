@@ -104,13 +104,13 @@ export default function Home() {
         </div>
       </div>
 
-      <header className="max-w-4xl mx-auto mb-8 relative z-10">
+      <header className="max-w-4xl mx-auto mb-8 relative z-50">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-5xl font-kai text-ink tracking-[0.3em] text-shadow-glow glow-text">
+            <h1 className="text-5xl text-ink tracking-[0.3em] text-shadow-glow glow-text">
               六爻排盘
             </h1>
-            <p className="text-ink-light mt-3 font-kai text-lg tracking-wider">
+            <p className="text-ink-light mt-3 text-lg tracking-wider">
               --- 铜钱起卦 天机妙算 自动排盘 ---
             </p>
           </div>
@@ -134,7 +134,7 @@ export default function Home() {
               <button
                 key={m}
                 onClick={() => handleMethodChange(m)}
-                className={`pb-3 px-6 font-kai text-lg transition-all flex items-center gap-2 rounded-t-lg ${
+                className={`pb-3 px-6 text-lg transition-all flex items-center gap-2 rounded-t-lg ${
                   method === m 
                     ? 'tab-active text-cinnabar bg-cinnabar/5' 
                     : 'text-ink-light hover:text-ink hover:bg-paper-dark/50'
@@ -148,17 +148,17 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm text-ink-light mb-2 font-kai tracking-wide">◆ 占问事项</label>
+              <label className="block text-sm text-ink-light mb-2 tracking-wide">◆ 占问事项</label>
               <input
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 placeholder="请输入您想占问的事情..."
-                className="w-full px-4 py-3 border border-paper-dark rounded-lg bg-paper/50 focus:outline-none focus:border-cinnabar focus:ring-2 focus:ring-cinnabar/20 transition-all font-song text-lg"
+                className="w-full px-4 py-3 border border-paper-dark rounded-lg bg-paper/50 focus:outline-none focus:border-cinnabar focus:ring-2 focus:ring-cinnabar/20 transition-all text-lg"
               />
             </div>
             <div>
-              <label className="block text-sm text-ink-light mb-2 font-kai tracking-wide">◆ 占问时间</label>
+              <label className="block text-sm text-ink-light mb-2 tracking-wide">◆ 占问时间</label>
               <input
                 type="date"
                 value={date}
@@ -172,7 +172,7 @@ export default function Home() {
         {method === 'coins' && (
           <div className="paper-card p-10 mb-6 animate-slide-up relative overflow-hidden">
             <div className="absolute top-4 right-4 text-4xl opacity-10">⚂</div>
-            <h3 className="text-2xl font-kai text-center mb-8 text-ink">
+            <h3 className="text-2xl text-center mb-8 text-ink">
               {currentStep < 6 
                 ? <>第 <span className="text-cinnabar text-3xl mx-1">{currentStep + 1}</span> 爻：静心凝神，点击抛掷</>
                 : '六爻已成，天机已显...'}
@@ -191,7 +191,7 @@ export default function Home() {
             </div>
 
             {coinResults && !isFlipping && currentStep < 6 && (
-              <p className="text-center text-ink-light font-kai mb-6 animate-fade-in">
+              <p className="text-center text-ink-light mb-6 animate-fade-in">
                 {coinResults.filter(c => c).length === 3 && '三正为老阳 ○ 动爻'}
                 {coinResults.filter(c => c).length === 0 && '三反为老阴 × 动爻'}
                 {coinResults.filter(c => c).length === 2 && '两正一反为少阴 - -'}
@@ -233,11 +233,11 @@ export default function Home() {
 
         {method === 'manual' && (
           <div className="paper-card p-8 mb-6 animate-slide-up">
-            <h3 className="text-2xl font-kai text-center mb-8 text-ink">手动选择每一爻的阴阳动变</h3>
+            <h3 className="text-2xl text-center mb-8 text-ink">手动选择每一爻的阴阳动变</h3>
             <div className="max-w-lg mx-auto space-y-4 mb-8">
               {[5, 4, 3, 2, 1, 0].map((i) => (
                 <div key={i} className="flex items-center gap-4 p-3 rounded-lg hover:bg-paper-dark/30 transition-colors">
-                  <span className="w-12 font-kai text-lg">{YAO_LABELS[i]}爻</span>
+                  <span className="w-12 text-lg">{YAO_LABELS[i]}爻</span>
                   <div className="flex gap-2 flex-1 justify-end">
                     {[
                       { label: '少阳 —', yin: false, changing: false },
@@ -251,7 +251,7 @@ export default function Home() {
                         <button
                           key={opt.label}
                           onClick={() => handleManualYao(i, opt.yin, opt.changing)}
-                          className={`px-4 py-2 rounded-lg border transition-all font-kai ${
+                          className={`px-4 py-2 rounded-lg border transition-all ${
                             selected 
                               ? 'bg-cinnabar text-paper border-cinnabar shadow-md' 
                               : 'border-paper-dark hover:border-cinnabar text-ink-light hover:text-ink'
@@ -288,15 +288,15 @@ export default function Home() {
             <div className="relative z-10">
               <div className="mb-8">
                 <Sparkles className="mx-auto mb-6 text-cinnabar float-animation" size={64} />
-                <h3 className="text-2xl font-kai mb-4 text-ink">梅花易数 天机起卦</h3>
-                <p className="text-ink-light max-w-md mx-auto leading-relaxed font-kai">
+                <h3 className="text-2xl mb-4 text-ink">梅花易数 天机起卦</h3>
+                <p className="text-ink-light max-w-md mx-auto leading-relaxed">
                   以年月日时起卦，不假人为，纯由天机。<br/>
                   年、月、日数相加除以8得上卦，加时辰数除以8得下卦，总数除以6得动爻。
                 </p>
               </div>
               
               <div className="bg-paper-dark/30 rounded-lg p-6 mb-8 inline-block">
-                <div className="flex items-center justify-center gap-3 text-ink-light font-kai">
+                <div className="flex items-center justify-center gap-3 text-ink-light">
                   <Clock size={20} />
                   <span>选定时间：<span className="text-ink text-lg">{date}</span></span>
                 </div>
@@ -316,7 +316,7 @@ export default function Home() {
 
         {method !== 'time' && (
           <div className="paper-card p-8 animate-fade-in" style={{ animationDelay: '200ms' }}>
-            <h3 className="text-xl font-kai text-center mb-6 text-ink-light">
+            <h3 className="text-xl text-center mb-6 text-ink-light">
               {method === 'coins' && currentStep > 0 ? '卦象渐显...' : '已确定爻位预览'}
             </h3>
             <div className="flex flex-col items-center">

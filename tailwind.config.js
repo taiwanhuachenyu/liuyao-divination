@@ -4,6 +4,12 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  safelist: [
+    'font-song',
+    'font-kai',
+    'font-li',
+    'font-hei',
+  ],
   theme: {
     extend: {
       colors: {
