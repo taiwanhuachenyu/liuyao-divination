@@ -29,6 +29,13 @@ export default function Home() {
     reset()
   }, [])
 
+  useEffect(() => {
+    if (method !== 'coins' || isFlipping) return
+    if (currentStep >= 6) {
+      setTimeout(() => generateResult(), 500)
+    }
+  }, [currentStep, isFlipping, method])
+
   const handleMethodChange = (m: 'coins' | 'manual' | 'time') => {
     reset()
     setMethod(m)
@@ -53,9 +60,6 @@ export default function Home() {
       addYao(yin, changing)
       setTimeout(() => {
         setIsFlipping(false)
-        if (currentStep + 1 >= 6) {
-          setTimeout(() => generateResult(), 500)
-        }
       }, 500)
     }, 900)
   }
@@ -72,17 +76,18 @@ export default function Home() {
   }
 
   const generateResult = () => {
-    const completeYaos = yaos.filter((y): y is NonNullable<typeof y> => y !== null)
+    const state = useDivinationStore.getState()
+    const completeYaos = state.yaos.filter((y): y is NonNullable<typeof y> => y !== null)
     if (completeYaos.length !== 6) {
-      if (method === 'manual') {
-        const allYaos = yaos.map((y, i) => y || { index: i, yin: i % 2 === 0, changing: false })
-        const result = createDivination(allYaos, question, date, method)
+      if (state.method === 'manual') {
+        const allYaos = state.yaos.map((y, i) => y || { index: i, yin: i % 2 === 0, changing: false })
+        const result = createDivination(allYaos, state.question, state.date, state.method)
         setResult(result)
         navigate('/result')
       }
       return
     }
-    const result = createDivination(completeYaos, question, date, method)
+    const result = createDivination(completeYaos, state.question, state.date, state.method)
     setResult(result)
     navigate('/result')
   }

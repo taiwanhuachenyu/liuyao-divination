@@ -22,10 +22,10 @@ export default {
         'ink-light': '#3D3D3D',
       },
       fontFamily: {
-        song: ['"Noto Serif SC"', '"Source Han Serif SC"', '"STSong"', 'serif'],
-        kai: ['"LXGW WenKai"', '"ZCOOL XiaoWei"', '"STKaiti"', 'KaiTi', 'serif'],
-        li: ['"Ma Shan Zheng"', '"STLiti"', 'LiSu', '"FangSong"', 'cursive'],
-        hei: ['"Noto Sans SC"', '"Microsoft YaHei"', 'PingFang SC', 'sans-serif'],
+        song: ['SimSun', '"STSong"', '"Noto Serif SC"', '"Source Han Serif SC"', 'serif'],
+        kai: ['KaiTi', '"STKaiti"', '"DFKai-SB"', '"Noto Serif SC"', 'serif'],
+        li: ['LiSu', '"STLiti"', '"Ma Shan Zheng"', 'cursive'],
+        hei: ['"Microsoft YaHei"', 'SimHei', '"Noto Sans SC"', 'PingFang SC', 'sans-serif'],
       },
       animation: {
         'coin-flip': 'coinFlip 0.8s ease-out',

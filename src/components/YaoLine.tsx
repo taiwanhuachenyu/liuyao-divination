@@ -13,7 +13,7 @@ export default function YaoLine({ yao, label, showChanging = true, size = 'md', 
   const sizeClasses = {
     sm: { line: 'h-2', yang: 'w-16', yinGap: 'w-16 [&>*]:w-6 [&>*]:h-2', space: 'my-1' },
     md: { line: 'h-3', yang: 'w-24', yinGap: 'w-24 [&>*]:w-10 [&>*]:h-3', space: 'my-2' },
-    lg: { line: 'h-4', yang: 'w-32', yinGap: 'w-32 [&>*]:w-13 [&>*]:h-4', space: 'my-2.5' },
+    lg: { line: 'h-4', yang: 'w-32', yinGap: 'w-32 [&>*]:w-12 [&>*]:h-4', space: 'my-2.5' },
   }[size]
 
   if (!yao) {

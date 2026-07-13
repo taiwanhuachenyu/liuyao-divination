@@ -1,4 +1,5 @@
 import { X, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useDivinationStore } from '../store/useDivinationStore'
 import { Divination } from '../types'
 
@@ -8,18 +9,19 @@ interface HistoryDrawerProps {
 }
 
 export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
+  const navigate = useNavigate()
   const { history, loadFromHistory, deleteHistory, reset } = useDivinationStore()
 
   const handleLoad = (d: Divination) => {
     loadFromHistory(d)
     onClose()
-    window.location.hash = '#/result'
+    navigate('/result')
   }
 
   const handleNew = () => {
     reset()
     onClose()
-    window.location.hash = '#/'
+    navigate('/')
   }
 
   return (
