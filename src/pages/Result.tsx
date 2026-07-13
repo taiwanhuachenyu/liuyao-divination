@@ -6,6 +6,12 @@ import { aiDivination } from '../utils/ai'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
 
+// 爻题：初、上爻数字在后（初九、上六），二至五爻数字在前（九二、六五）
+const yaoTitle = (pos: number, yin: boolean) => {
+  const num = yin ? '六' : '九'
+  return pos === 0 || pos === 5 ? `${YAO_LABELS[pos]}${num}` : `${num}${YAO_LABELS[pos]}`
+}
+
 export default function Result() {
   const navigate = useNavigate()
   const { result, reset, aiInterpretation, aiLoading, appendAiInterpretation, setAiInterpretation, setAiLoading } = useDivinationStore()
@@ -158,43 +164,54 @@ export default function Result() {
               </div>
             </div>
             <div className="flex flex-col items-center">
+              <div className="flex items-center justify-center gap-1.5 md:gap-3 mb-2 md:mb-3 pb-2 border-b border-paper-dark/40 text-[10px] md:text-xs text-ink-light/70 tracking-wide">
+                <div className="w-14 md:w-20 text-right">六神 · 纳甲</div>
+                <div className="w-5 md:w-6 text-center">世应</div>
+                <div className="w-24 md:w-36 text-center">卦 象</div>
+                <div className="w-5 md:w-7 text-center">动</div>
+                <div className="w-14 md:w-20 text-left">六亲 · 爻题</div>
+              </div>
               {reversedYaos.map((yao, idx) => {
                 const pos = 5 - idx
                 const info = reversedNajia[idx]
                 return (
-                  <div key={pos} className="relative flex items-center w-full max-w-xs md:max-w-sm justify-center my-1.5 md:my-2.5 scale-90 md:scale-100" style={{ animationDelay: `${idx * 80}ms` }}>
-                    <div className="absolute left-0 text-right w-16 md:w-24">
+                  <div key={pos} className="flex items-center justify-center gap-1.5 md:gap-3 my-1.5 md:my-2.5 animate-yao-reveal" style={{ animationDelay: `${idx * 80}ms` }}>
+                    <div className="w-14 md:w-20 text-right leading-tight">
                       <div className="text-xs md:text-sm text-ocher">{info.sixShen}</div>
                       <div className="text-[10px] md:text-xs text-indigo">{info.naJia}</div>
                     </div>
-                    <div className="relative">
-                      {yao.yin ? (
-                        <div className="h-3 md:h-4 w-24 md:w-36 flex justify-between">
-                          <div className="w-9 md:w-14 h-3 md:h-4 bg-ink rounded shadow-md" />
-                          <div className="w-9 md:w-14 h-3 md:h-4 bg-ink rounded shadow-md" />
-                        </div>
-                      ) : (
-                        <div className="h-3 md:h-4 w-24 md:w-36 bg-ink rounded shadow-md" />
-                      )}
+                    <div className="w-5 md:w-6 text-center text-base md:text-lg font-bold leading-none">
+                      {info.shi && <span className="text-cinnabar">世</span>}
+                      {info.ying && <span className="text-indigo">应</span>}
+                    </div>
+                    {yao.yin ? (
+                      <div className="h-3 md:h-4 w-24 md:w-36 flex justify-between shrink-0">
+                        <div className="w-9 md:w-14 h-full bg-ink rounded shadow-md" />
+                        <div className="w-9 md:w-14 h-full bg-ink rounded shadow-md" />
+                      </div>
+                    ) : (
+                      <div className="h-3 md:h-4 w-24 md:w-36 bg-ink rounded shadow-md shrink-0" />
+                    )}
+                    <div className="w-5 md:w-7 flex justify-center">
                       {yao.changing && (
-                        <div className="absolute -right-6 md:-right-8 top-1/2 -translate-y-1/2 w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-cinnabar bg-paper text-cinnabar text-xs md:text-sm flex items-center justify-center font-bold shadow-sm animate-pulse">
+                        <div className="w-5 h-5 md:w-6 md:h-6 rounded-full border-2 border-cinnabar bg-paper text-cinnabar text-xs md:text-sm flex items-center justify-center font-bold shadow-sm animate-pulse">
                           {yao.yin ? '×' : '○'}
                         </div>
                       )}
-                      {info.shi && (
-                        <div className="absolute -left-10 md:-left-16 top-1/2 -translate-y-1/2 text-cinnabar text-base md:text-lg font-bold">世</div>
-                      )}
-                      {info.ying && (
-                        <div className="absolute -left-10 md:-left-16 top-1/2 -translate-y-1/2 text-indigo text-base md:text-lg font-bold">应</div>
-                      )}
                     </div>
-                    <div className="absolute right-0 text-left w-16 md:w-24">
+                    <div className="w-14 md:w-20 text-left leading-tight">
                       <div className="text-sm md:text-base text-cinnabar">{info.sixQin}</div>
-                      <div className="text-[10px] md:text-xs text-ink-light">{YAO_LABELS[pos]}{yao.yin ? '六' : '九'}</div>
+                      <div className="text-[10px] md:text-xs text-ink-light">{yaoTitle(pos, yao.yin)}</div>
                     </div>
                   </div>
                 )
               })}
+              <div className="mt-5 md:mt-6 pt-3 border-t border-paper-dark/40 w-full flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] md:text-xs text-ink-light/70">
+                <span><span className="text-cinnabar font-bold">世</span> 自身、求测者</span>
+                <span><span className="text-indigo font-bold">应</span> 他人、所测之事</span>
+                <span><span className="text-cinnabar font-bold">○</span> 老阳（动）</span>
+                <span><span className="text-cinnabar font-bold">×</span> 老阴（动）</span>
+              </div>
             </div>
           </div>
 
@@ -366,7 +383,7 @@ export default function Result() {
                 >
                   <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3 flex-wrap">
                     <span className="text-cinnabar font-bold text-base md:text-lg">
-                      {YAO_LABELS[idx]}{yao.yin ? '六' : '九'}
+                      {yaoTitle(idx, yao.yin)}
                     </span>
                     <span className="text-[10px] md:text-xs px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-paper-dark text-ink-light">
                       {yaoTypeName(yao.yin, yao.changing)}
@@ -377,10 +394,10 @@ export default function Result() {
                       </span>
                     )}
                     {najia[idx].shi && (
-                      <span className="text-[10px] md:text-xs px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-indigo/20 text-indigo">世爻</span>
+                      <span className="text-[10px] md:text-xs px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-cinnabar/15 text-cinnabar">世爻</span>
                     )}
                     {najia[idx].ying && (
-                      <span className="text-[10px] md:text-xs px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-ocher/20 text-ocher">应爻</span>
+                      <span className="text-[10px] md:text-xs px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-indigo/15 text-indigo">应爻</span>
                     )}
                     <span className="text-[10px] md:text-xs text-ocher ml-auto">{najia[idx].sixShen} {najia[idx].naJia} {najia[idx].sixQin}</span>
                   </div>

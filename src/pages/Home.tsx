@@ -97,7 +97,7 @@ export default function Home() {
 
   const handleTimeDivination = () => {
     const timeYaos = timeDivination(date, hour)
-    const result = createDivination(timeYaos, question || '天机起卦', date, 'time', hour)
+    const result = createDivination(timeYaos, question, date, 'time', hour)
     setResult(result)
     navigate('/result')
   }
