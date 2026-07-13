@@ -38,15 +38,25 @@ export default function Result() {
   const methodName = result.method === 'coins' ? '铜钱摇卦' : result.method === 'manual' ? '手动起卦' : '天机起卦'
 
   const handleShare = () => {
+    const summary = [
+      '六爻排盘',
+      `占问：${question || '（未填写）'}`,
+      `${date}`,
+      `得【${original.name}】${changed ? ` 之 【${changed.name}】` : '（六爻安静）'}`,
+      `${original.judgment}`,
+    ].join('\n')
+
     if (navigator.share) {
       navigator.share({
         title: `六爻排盘 - ${original.name}`,
-        text: `${question || '占问'}：得${original.name}${changed ? `之${changed.name}` : ''}`,
-        url: window.location.href,
-      })
+        text: summary,
+      }).catch(() => {})
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(summary)
+        .then(() => alert('卦象已复制到剪贴板'))
+        .catch(() => alert('复制失败，请手动截图保存'))
     } else {
-      navigator.clipboard.writeText(window.location.href)
-      alert('链接已复制到剪贴板')
+      alert('当前环境不支持分享')
     }
   }
 

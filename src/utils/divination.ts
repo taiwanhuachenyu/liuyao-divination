@@ -17,9 +17,10 @@ const NAJIA_GANZHI: Record<string, string[]> = {
 const TIAN_GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸']
 const DI_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
 
+// 六甲旬空亡（按旬序：甲子、甲戌、甲申、甲午、甲辰、甲寅）
+// 甲子旬空戌亥、甲戌旬空申酉、甲申旬空午未、甲午旬空辰巳、甲辰旬空寅卯、甲寅旬空子丑
 const XUN_KONG: [number, number][] = [
-  [9, 10], [10, 11], [11, 0], [0, 1], [1, 2], [2, 3],
-  [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [8, 9]
+  [10, 11], [0, 1], [2, 3], [4, 5], [6, 7], [8, 9]
 ]
 
 export function tossCoins(): { yin: boolean; changing: boolean } {
@@ -66,8 +67,8 @@ function getSolarTerms(year: number): { name: string; index: number }[] {
 
 function getGanZhi(date: Date): { yearGan: number; yearZhi: number; monthGan: number; monthZhi: number; dayGan: number; dayZhi: number } {
   const baseDate = new Date(1900, 0, 1)
-  const baseDayGan = 0
-  const baseDayZhi = 0
+  const baseDayGan = 0  // 1900-01-01 为甲戌日：天干甲
+  const baseDayZhi = 10 // 1900-01-01 为甲戌日：地支戌
   const daysDiff = Math.floor((date.getTime() - baseDate.getTime()) / (1000 * 60 * 60 * 24))
   let dayGan = (baseDayGan + daysDiff) % 10
   let dayZhi = (baseDayZhi + daysDiff) % 12
@@ -90,7 +91,7 @@ function getGanZhi(date: Date): { yearGan: number; yearZhi: number; monthGan: nu
     }
   }
 
-  let monthGan = ((yearGan % 5) * 2 + 2 + monthZhi - 2) % 10
+  const monthGan = ((yearGan % 5) * 2 + 2 + monthZhi - 2) % 10
 
   return { yearGan, yearZhi, monthGan, monthZhi, dayGan, dayZhi }
 }
@@ -291,9 +292,11 @@ export function createDivination(
   const yaoBools = originalYao.map(y => y.yin)
   const original = getHexagramFromYaos(yaoBools)
   const { hexagram: changed, changedYaos } = getChangedHexagram(originalYao)
-  
-  const now = new Date()
-  const ganZhi = getGanZhi(now)
+
+  // 日辰、月建、旬空、六神均以起卦所选日期推算，而非当前时刻
+  const selected = new Date(`${date}T12:00:00`)
+  const ganZhiDate = isNaN(selected.getTime()) ? new Date() : selected
+  const ganZhi = getGanZhi(ganZhiDate)
   const najia = calculateNajia(original, originalYao, ganZhi.dayGan)
   
   const dayGanZhi = TIAN_GAN[ganZhi.dayGan] + DI_ZHI[ganZhi.dayZhi]

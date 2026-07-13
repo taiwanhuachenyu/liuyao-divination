@@ -8,6 +8,7 @@ import YaoLine from '../components/YaoLine'
 import HistoryDrawer from '../components/HistoryDrawer'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
+const COIN_RESTING_FACES = [true, false, true]
 const METHOD_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   coins: { label: '铜钱摇卦', icon: <span className="text-lg">⚂</span> },
   manual: { label: '手动选卦', icon: <span className="text-lg">☯</span> },
@@ -26,6 +27,8 @@ export default function Home() {
 
   useEffect(() => {
     reset()
+    // 仅在进入起卦页时重置一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -85,15 +88,7 @@ export default function Home() {
   const generateResult = () => {
     const state = useDivinationStore.getState()
     const completeYaos = state.yaos.filter((y): y is NonNullable<typeof y> => y !== null)
-    if (completeYaos.length !== 6) {
-      if (state.method === 'manual') {
-        const allYaos = state.yaos.map((y, i) => y || { index: i, yin: i % 2 === 0, changing: false })
-        const result = createDivination(allYaos, state.question, state.date, state.method)
-        setResult(result)
-        navigate('/result')
-      }
-      return
-    }
+    if (completeYaos.length !== 6) return
     const result = createDivination(completeYaos, state.question, state.date, state.method)
     setResult(result)
     navigate('/result')
@@ -105,6 +100,8 @@ export default function Home() {
   }
 
   const previewYaos = yaos.slice().reverse()
+  const manualSelectedCount = yaos.filter(Boolean).length
+  const manualComplete = manualSelectedCount === 6
 
   return (
     <div className="min-h-screen py-4 md:py-8 px-3 md:px-4 relative">
@@ -192,9 +189,9 @@ export default function Home() {
             <div className="flex justify-center gap-4 md:gap-8 mb-6 md:mb-10">
               {[0, 1, 2].map((i) => (
                 <div key={i} className="float-animation scale-75 md:scale-100" style={{ animationDelay: `${i * 200}ms` }}>
-                  <Coin 
-                    heads={coinResults ? coinResults[i] : Math.random() > 0.5} 
-                    flipping={isFlipping} 
+                  <Coin
+                    heads={coinResults ? coinResults[i] : COIN_RESTING_FACES[i]}
+                    flipping={isFlipping}
                     delay={i * 100}
                   />
                 </div>
@@ -203,8 +200,8 @@ export default function Home() {
 
             {coinResults && !isFlipping && currentStep < 6 && (
               <p className="text-center text-ink-light mb-4 md:mb-6 animate-fade-in text-sm md:text-base">
-                {coinResults.filter(c => c).length === 3 && '三正为老阳 ○ 动爻'}
-                {coinResults.filter(c => c).length === 0 && '三反为老阴 × 动爻'}
+                {coinResults.filter(c => c).length === 3 && '三正为老阴 × 动爻'}
+                {coinResults.filter(c => c).length === 0 && '三反为老阳 ○ 动爻'}
                 {coinResults.filter(c => c).length === 2 && '两正一反为少阴 - -'}
                 {coinResults.filter(c => c).length === 1 && '两反一正为少阳 —'}
               </p>
@@ -276,17 +273,25 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <div className="flex justify-center gap-3 md:gap-4 flex-wrap">
-              <button
-                onClick={generateResult}
-                className="seal-button-primary px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl"
-              >
-                ✨ 开始排盘
-              </button>
-              <button onClick={handleReset} className="seal-button flex items-center gap-2 px-5 md:px-6 py-3 md:py-4">
-                <RotateCcw size={20} />
-                重置
-              </button>
+            <div className="flex flex-col items-center gap-3">
+              {!manualComplete && (
+                <p className="text-sm text-ink-light/80">
+                  还需选择 <span className="text-cinnabar font-bold">{6 - manualSelectedCount}</span> 爻方可排盘
+                </p>
+              )}
+              <div className="flex justify-center gap-3 md:gap-4 flex-wrap">
+                <button
+                  onClick={generateResult}
+                  disabled={!manualComplete}
+                  className="seal-button-primary px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl"
+                >
+                  ✨ 开始排盘
+                </button>
+                <button onClick={handleReset} className="seal-button flex items-center gap-2 px-5 md:px-6 py-3 md:py-4">
+                  <RotateCcw size={20} />
+                  重置
+                </button>
+              </div>
             </div>
           </div>
         )}
