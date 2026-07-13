@@ -13,12 +13,12 @@ export const TRIGRAMS: Trigram[] = [
 
 export const TRIGRAM_YAO_MAP: Record<number, boolean[]> = {
   1: [false, false, false],
-  2: [true, false, false],
-  3: [true, false, true],
-  4: [false, false, true],
-  5: [false, true, false],
-  6: [true, true, false],
-  7: [false, true, true],
+  2: [false, false, true],
+  3: [false, true, false],
+  4: [false, true, true],
+  5: [true, false, false],
+  6: [true, false, true],
+  7: [true, true, false],
   8: [true, true, true],
 }
 

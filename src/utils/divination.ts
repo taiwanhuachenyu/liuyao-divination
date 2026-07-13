@@ -1,5 +1,5 @@
 import { Yao, Hexagram, NajiaItem, Divination } from '../types'
-import { getTrigramFromYaos, TRIGRAM_YAO_MAP } from '../data/trigrams'
+import { getTrigramFromYaos, TRIGRAM_YAO_MAP, TRIGRAMS } from '../data/trigrams'
 import { HEXAGRAMS } from '../data/hexagrams'
 
 const SIX_SHEN = ['青龙', '朱雀', '勾陈', '螣蛇', '白虎', '玄武']
@@ -17,25 +17,25 @@ const NAJIA_GANZHI: Record<string, string[]> = {
 export function tossCoins(): { yin: boolean; changing: boolean } {
   const coins = [Math.random() > 0.5, Math.random() > 0.5, Math.random() > 0.5]
   const heads = coins.filter(c => c).length
-  if (heads === 3) return { yin: false, changing: true }
-  if (heads === 0) return { yin: true, changing: true }
-  if (heads === 1) return { yin: false, changing: false }
-  return { yin: true, changing: false }
+  if (heads === 0) return { yin: false, changing: true }
+  if (heads === 3) return { yin: true, changing: true }
+  if (heads === 1) return { yin: true, changing: false }
+  return { yin: false, changing: false }
 }
 
 function getHourZhi(hour: number): number {
-  if (hour >= 23 || hour < 1) return 0
-  if (hour >= 1 && hour < 3) return 1
-  if (hour >= 3 && hour < 5) return 2
-  if (hour >= 5 && hour < 7) return 3
-  if (hour >= 7 && hour < 9) return 4
-  if (hour >= 9 && hour < 11) return 5
-  if (hour >= 11 && hour < 13) return 6
-  if (hour >= 13 && hour < 15) return 7
-  if (hour >= 15 && hour < 17) return 8
-  if (hour >= 17 && hour < 19) return 9
-  if (hour >= 19 && hour < 21) return 10
-  return 11
+  if (hour >= 23 || hour < 1) return 1
+  if (hour >= 1 && hour < 3) return 2
+  if (hour >= 3 && hour < 5) return 3
+  if (hour >= 5 && hour < 7) return 4
+  if (hour >= 7 && hour < 9) return 5
+  if (hour >= 9 && hour < 11) return 6
+  if (hour >= 11 && hour < 13) return 7
+  if (hour >= 13 && hour < 15) return 8
+  if (hour >= 15 && hour < 17) return 9
+  if (hour >= 17 && hour < 19) return 10
+  if (hour >= 19 && hour < 21) return 11
+  return 12
 }
 
 function trigramIdToYaos(id: number): boolean[] {
@@ -51,9 +51,10 @@ export function timeDivination(dateStr: string, hour?: number): Yao[] {
   const hourZhi = getHourZhi(h)
 
   const yearNum = ((year - 4) % 12) + 1
-  const upperNum = (yearNum + month + day) % 8
-  const lowerNum = (yearNum + month + day + hourZhi + 1) % 8
-  const changingYao = (yearNum + month + day + hourZhi + 1) % 6
+  const sum = yearNum + month + day
+  const upperNum = sum % 8
+  const lowerNum = (sum + hourZhi) % 8
+  const changingYao = (sum + hourZhi) % 6
   
   const upperTrigramId = upperNum === 0 ? 8 : upperNum
   const lowerTrigramId = lowerNum === 0 ? 8 : lowerNum
@@ -103,29 +104,51 @@ export function getChangedHexagram(originalYaos: Yao[]): { hexagram: Hexagram | 
   return { hexagram: getHexagramFromYaos(yaoBools), changedYaos }
 }
 
-function getShiYing(upperId: number, lowerId: number): { shi: number; ying: number } {
-  const shiYingMap: Record<string, number> = {
-    '1-1': 5, '8-8': 5,
-    '7-8': 0, '8-7': 0, '4-6': 0, '6-4': 0, '2-3': 0, '3-2': 0, '1-5': 0, '5-1': 0,
-    '1-6': 1, '6-1': 1, '2-6': 1, '6-2': 1, '7-5': 1, '5-7': 1, '7-4': 1, '4-7': 1, '3-5': 1, '5-3': 1, '8-4': 1, '4-8': 1,
-    '1-4': 2, '4-1': 2, '2-5': 2, '5-2': 2, '3-6': 2, '6-3': 2, '7-3': 2, '3-7': 2, '8-6': 2, '6-8': 2,
-    '1-3': 3, '3-1': 3, '2-4': 3, '4-2': 3, '5-6': 3, '6-5': 3,
-    '1-2': 4, '2-1': 4, '3-4': 4, '4-3': 4, '5-8': 4, '8-5': 4, '6-7': 4, '7-6': 4,
+function getGongAndShiYing(upperId: number, lowerId: number): { gongId: number; shi: number; ying: number } {
+  const yaos = [
+    ...trigramIdToYaos(lowerId),
+    ...trigramIdToYaos(upperId)
+  ]
+  
+  for (let gong = 1; gong <= 8; gong++) {
+    const base = [...trigramIdToYaos(gong), ...trigramIdToYaos(gong)]
+    
+    if (yaos.every((y, i) => y === base[i])) return { gongId: gong, shi: 5, ying: 2 }
+    
+    let c = [...base]; c[0] = !c[0]
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 0, ying: 3 }
+    
+    c = [...base]; c[0] = !c[0]; c[1] = !c[1]
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 1, ying: 4 }
+    
+    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 2, ying: 5 }
+    
+    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 3, ying: 0 }
+    
+    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]; c[4] = !c[4]
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 4, ying: 1 }
+    
+    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]; c[4] = !c[4]; c[3] = !c[3]
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 3, ying: 0 }
+    
+    c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 2, ying: 5 }
   }
-  const key = `${upperId}-${lowerId}`
-  const shi = shiYingMap[key] ?? 2
-  const ying = (shi + 3) % 6
-  return { shi, ying }
+
+  return { gongId: upperId, shi: 2, ying: 5 }
 }
 
 function calculateNajia(hexagram: Hexagram, _yaos: Yao[], dateGanIndex: number = 0): NajiaItem[] {
   const najia: NajiaItem[] = []
-  const { shi, ying } = getShiYing(hexagram.upperTrigram.id, hexagram.lowerTrigram.id)
+  const { gongId, shi, ying } = getGongAndShiYing(hexagram.upperTrigram.id, hexagram.lowerTrigram.id)
+  const gongTrigram = TRIGRAMS[gongId - 1]
   
   const upperNajia = NAJIA_GANZHI[hexagram.upperTrigram.name] || []
   const lowerNajia = NAJIA_GANZHI[hexagram.lowerTrigram.name] || []
   
-  const gongElement = hexagram.upperTrigram.element
+  const gongElement = gongTrigram.element
   const wuxingSheng: Record<string, string> = {
     '金': '水', '水': '木', '木': '火', '火': '土', '土': '金'
   }
@@ -147,9 +170,9 @@ function calculateNajia(hexagram: Hexagram, _yaos: Yao[], dateGanIndex: number =
     let sixQin = '兄弟'
     if (yaoElement === gongElement) sixQin = '兄弟'
     else if (wuxingSheng[gongElement] === yaoElement) sixQin = '子孙'
-    else if (wuxingKe[yaoElement] === gongElement) sixQin = '妻财'
+    else if (wuxingKe[gongElement] === yaoElement) sixQin = '妻财'
     else if (wuxingSheng[yaoElement] === gongElement) sixQin = '父母'
-    else if (wuxingKe[gongElement] === yaoElement) sixQin = '官鬼'
+    else if (wuxingKe[yaoElement] === gongElement) sixQin = '官鬼'
     
     const sixShenIndex = (dateGanIndex + i) % 6
     najia.push({
