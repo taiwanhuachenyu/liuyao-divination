@@ -1,13 +1,17 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, Key, RefreshCw } from 'lucide-react'
 import { useDivinationStore } from '../store/useDivinationStore'
 import { getHexagramInterpretation } from '../utils/divination'
+import { aiDivination } from '../utils/ai'
+import ApiKeyModal from '../components/ApiKeyModal'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
 
 export default function Result() {
   const navigate = useNavigate()
-  const { result, reset } = useDivinationStore()
+  const { result, reset, aiApiKey, aiInterpretation, aiLoading, appendAiInterpretation, setAiInterpretation, setAiLoading } = useDivinationStore()
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false)
 
   if (!result) {
     return (
@@ -52,6 +56,23 @@ export default function Result() {
   const handleNew = () => {
     reset()
     navigate('/')
+  }
+
+  const handleAiDivination = async () => {
+    if (!aiApiKey || aiApiKey.trim() === '') {
+      setApiKeyModalOpen(true)
+      return
+    }
+    setAiInterpretation('')
+    setAiLoading(true)
+    await aiDivination(aiApiKey, result, question, {
+      onToken: (token) => appendAiInterpretation(token),
+      onDone: () => setAiLoading(false),
+      onError: (err) => {
+        setAiInterpretation(`AI解卦出错：${err}`)
+        setAiLoading(false)
+      }
+    })
   }
 
   return (
@@ -257,6 +278,62 @@ export default function Result() {
           </p>
         </div>
 
+        <div className="paper-card p-4 md:p-8 mb-4 md:mb-6 animate-fade-in" style={{ animationDelay: '320ms' }}>
+          <div className="flex items-center justify-between mb-4 md:mb-6">
+            <h3 className="text-xl md:text-2xl text-cinnabar flex items-center gap-2 md:gap-3 tracking-widest">
+              <Sparkles size={22} className="md:w-[28px] md:h-[28px]" />
+              AI 智 能 解 卦
+            </h3>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setApiKeyModalOpen(true)}
+                className="p-2 hover:bg-paper-dark rounded-full transition-all" 
+                title="设置API密钥"
+              >
+                <Key size={18} className="text-ink-light" />
+              </button>
+              {aiInterpretation && !aiLoading && (
+                <button 
+                  onClick={handleAiDivination}
+                  className="p-2 hover:bg-paper-dark rounded-full transition-all" 
+                  title="重新解读"
+                >
+                  <RefreshCw size={18} className="text-ink-light" />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {!aiInterpretation && !aiLoading ? (
+            <div className="text-center py-8">
+              <p className="text-ink-light mb-5">点击下方按钮，AI大师为您详细解读卦象</p>
+              <button 
+                onClick={handleAiDivination}
+                className="seal-button-primary px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl"
+              >
+                ✨ AI 大师解卦
+              </button>
+              <p className="text-xs text-ink-light/60 mt-4">
+                默认使用内置密钥，无需配置
+              </p>
+            </div>
+          ) : aiLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block mb-4">
+                <div className="w-10 h-10 border-4 border-cinnabar/30 border-t-cinnabar rounded-full animate-spin mx-auto"></div>
+              </div>
+              <p className="text-ink-light">AI大师正在解析卦象...</p>
+            </div>
+          ) : (
+            <div className="bg-paper-dark/20 rounded-xl p-5 md:p-6">
+              <p className="text-base md:text-lg leading-loose text-ink whitespace-pre-wrap">
+                {aiInterpretation}
+                <span className="inline-block w-2 h-5 bg-cinnabar/70 ml-1 animate-pulse"></span>
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="paper-card p-4 md:p-8 animate-fade-in" style={{ animationDelay: '350ms' }}>
           <h3 className="text-xl md:text-2xl mb-4 md:mb-6 text-cinnabar flex items-center gap-2 md:gap-3 tracking-widest">
             <span className="w-1 h-6 md:h-8 bg-cinnabar rounded-full" />
@@ -322,6 +399,7 @@ export default function Result() {
           <p className="mt-1">积善之家必有余庆 积不善之家必有余殃</p>
         </footer>
       </main>
+      <ApiKeyModal open={apiKeyModalOpen} onClose={() => setApiKeyModalOpen(false)} />
     </div>
   )
 }
