@@ -4,10 +4,8 @@ const API_ENDPOINT = 'https://apihub.agnes-ai.com/v1/chat/completions'
 const MODEL = 'agnes-2.0-flash'
 
 function decryptKey(pwd: string): string | null {
-  if (pwd === 'yike') {
-    const encoded = 'c2stVXNsYTQ5MHhhUFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVlMDRIMmo2'
-    return atob(encoded)
-  }
+  if (!pwd || pwd.trim() === '') return atob('c2stVXNsYTQ5MHhhUFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVlMDRIMmo2')
+  if (pwd === 'yike') return atob('c2stVXNsYTQ5MHhhUFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVlMDRIMmo2')
   return pwd
 }
 
@@ -53,7 +51,7 @@ export async function aiDivination(
 ): Promise<void> {
   const key = decryptKey(apiKey.trim())
   if (!key) {
-    callbacks.onError('请输入密钥，输入"yike"可使用内置密钥')
+    callbacks.onError('API密钥无效')
     return
   }
 

@@ -158,7 +158,7 @@ function calculateNajia(hexagram: Hexagram, _yaos: Yao[], dateGanIndex: number =
   
   for (let i = 0; i < 6; i++) {
     const isUpper = i >= 3
-    const naJia = isUpper ? upperNajia[i - 3] : lowerNajia[i]
+    const naJia = isUpper ? upperNajia[i] : lowerNajia[i]
     
     const gan = naJia?.[0] || ''
     const ganWuxing: Record<string, string> = {

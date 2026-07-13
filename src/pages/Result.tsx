@@ -314,7 +314,7 @@ export default function Result() {
                 ✨ AI 大师解卦
               </button>
               <p className="text-xs text-ink-light/60 mt-4">
-                默认使用内置密钥，无需配置
+                内置密钥，无需配置即可使用
               </p>
             </div>
           ) : aiLoading ? (

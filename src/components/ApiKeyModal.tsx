@@ -34,14 +34,14 @@ export default function ApiKeyModal({ open, onClose }: Props) {
           </button>
         </div>
         <p className="text-sm text-ink-light mb-4 leading-relaxed">
-          输入 <span className="text-cinnabar font-bold">yike</span> 即可使用内置免费密钥进行AI解卦。
-          如果你有自己的Agnes AI API密钥，也可以直接输入。
+          默认使用内置免费密钥可直接使用AI解卦。
+          如果你有自己的Agnes AI API密钥，也可以在这里输入。
         </p>
         <input
           type="password"
           value={tempKey}
           onChange={(e) => setTempKey(e.target.value)}
-          placeholder="输入yike或你自己的API密钥"
+          placeholder="留空使用内置密钥，或输入你的API密钥"
           className="w-full px-4 py-3 border border-paper-dark rounded-lg bg-paper/50 focus:outline-none focus:border-cinnabar focus:ring-2 focus:ring-cinnabar/20 transition-all text-lg"
           onKeyDown={(e) => e.key === 'Enter' && handleSave()}
         />

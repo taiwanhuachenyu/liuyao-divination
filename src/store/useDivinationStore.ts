@@ -44,7 +44,7 @@ export const useDivinationStore = create<DivinationState>()(
       isFlipping: false,
       result: null,
       history: [],
-      aiApiKey: 'yike',
+      aiApiKey: '',
       aiInterpretation: '',
       aiLoading: false,
       setQuestion: (q) => set({ question: q }),
