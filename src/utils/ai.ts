@@ -2,7 +2,7 @@ import { Divination } from '../types'
 
 const API_ENDPOINT = 'https://apihub.agnes-ai.com/v1/chat/completions'
 const MODEL = 'agnes-2.0-flash'
-const API_KEY = atob('c2stVXNsYTQ5MHhhUFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVlMDRIMmo2')
+const API_KEY = atob('c2stVXNsYTQ5MHh4UFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVFMDRIMmo2')
 
 function buildPrompt(divination: Divination, question: string): string {
   const { original, changed, originalYao, method, najia } = divination
