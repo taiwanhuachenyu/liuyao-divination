@@ -4,6 +4,12 @@ const API_ENDPOINT = 'https://apihub.agnes-ai.com/v1/chat/completions'
 const MODEL = 'agnes-2.0-flash'
 const API_KEY = atob('c2stVXNsYTQ5MHh4UFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVFMDRIMmo2')
 
+const METHOD_NAMES: Record<Divination['method'], string> = {
+  coins: '铜钱摇卦',
+  manual: '手动起卦',
+  time: '天机起卦（梅花易数时间起卦）',
+}
+
 function buildPrompt(divination: Divination, question: string): string {
   const { original, changed, originalYao, method, najia, dayGanZhi, monthJian, xunKong } = divination
   const changingYaos = originalYao.map((y, i: number) => y.changing ? i : -1).filter(i => i >= 0)
@@ -25,7 +31,7 @@ function buildPrompt(divination: Divination, question: string): string {
 日辰：${dayGanZhi}日
 旬空：${xunKong}
 占问事项：${question || '（未填）'}
-起卦方式：${method}
+起卦方式：${METHOD_NAMES[method] ?? method}
 
 本卦：${original.name}${original.symbol}，${original.upperTrigram.name}上${original.lowerTrigram.name}下
 ${original.judgment}
