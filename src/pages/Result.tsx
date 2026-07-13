@@ -24,7 +24,7 @@ export default function Result() {
     )
   }
 
-  const { original, changed, originalYao, changedYao, najia, question, date } = result
+  const { original, changed, originalYao, changedYao, najia, question, date, dayGanZhi, monthJian, xunKong } = result
   const reversedYaos = originalYao.slice().reverse()
   const reversedNajia = najia.slice().reverse()
   const changingYaos = originalYao.map((y, i) => y.changing ? i : -1).filter(i => i >= 0)
@@ -100,19 +100,26 @@ export default function Result() {
 
       <main className="max-w-5xl mx-auto relative z-10">
         <div className="paper-card p-4 md:p-8 mb-4 md:mb-6 animate-fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-center">
             <div className="p-3 md:p-4 rounded-lg bg-paper-dark/20">
-              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1 md:mb-2">◆ 占问事项</div>
-              <div className="text-base md:text-xl mt-1 text-ink">{question || '（未填写）'}</div>
+              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 占问事项</div>
+              <div className="text-sm md:text-lg mt-1 text-ink">{question || '（未填写）'}</div>
             </div>
             <div className="p-3 md:p-4 rounded-lg bg-paper-dark/20">
-              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1 md:mb-2">◆ 占问时间</div>
-              <div className="text-base md:text-xl mt-1">{date}</div>
+              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 月建</div>
+              <div className="text-base md:text-xl mt-1 text-cinnabar font-bold">{monthJian}</div>
             </div>
             <div className="p-3 md:p-4 rounded-lg bg-paper-dark/20">
-              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1 md:mb-2">◆ 起卦方式</div>
-              <div className="text-base md:text-xl mt-1 text-cinnabar">{methodName}</div>
+              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 日辰</div>
+              <div className="text-base md:text-xl mt-1 text-cinnabar font-bold">{dayGanZhi}日</div>
             </div>
+            <div className="p-3 md:p-4 rounded-lg bg-paper-dark/20">
+              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 旬空</div>
+              <div className="text-base md:text-xl mt-1 text-ocher font-bold">{xunKong}</div>
+            </div>
+          </div>
+          <div className="mt-2 md:mt-4 text-center text-xs md:text-sm text-ink-light/70">
+            {date} | {methodName}
           </div>
         </div>
 

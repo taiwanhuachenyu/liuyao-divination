@@ -58,8 +58,8 @@ export default function Home() {
       const coins = [Math.random() > 0.5, Math.random() > 0.5, Math.random() > 0.5]
       const heads = coins.filter(c => c).length
       let yin = false, changing = false
-      if (heads === 3) { yin = false; changing = true }
-      else if (heads === 0) { yin = true; changing = true }
+      if (heads === 0) { yin = false; changing = true }
+      else if (heads === 3) { yin = true; changing = true }
       else if (heads === 2) { yin = true; changing = false }
       else { yin = false; changing = false }
       

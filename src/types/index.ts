@@ -48,5 +48,8 @@ export interface Divination {
   original: Hexagram
   changed: Hexagram | null
   najia: NajiaItem[]
+  dayGanZhi: string
+  monthJian: string
+  xunKong: string
   created: number
 }
