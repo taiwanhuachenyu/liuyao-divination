@@ -11,9 +11,9 @@ interface YaoLineProps {
 
 export default function YaoLine({ yao, label, showChanging = true, size = 'md', animate = false, delay = 0 }: YaoLineProps) {
   const sizeClasses = {
-    sm: { line: 'h-2', yang: 'w-16', yinGap: 'w-16 [&>*]:w-6 [&>*]:h-2', space: 'my-1' },
-    md: { line: 'h-3', yang: 'w-24', yinGap: 'w-24 [&>*]:w-10 [&>*]:h-3', space: 'my-2' },
-    lg: { line: 'h-4', yang: 'w-32', yinGap: 'w-32 [&>*]:w-12 [&>*]:h-4', space: 'my-2.5' },
+    sm: { line: 'h-2 md:h-3', yang: 'w-20 md:w-24', yinGap: 'w-20 md:w-24 [&>*]:w-8 md:[&>*]:w-10 [&>*]:h-2 md:[&>*]:h-3', space: 'my-1 md:my-2' },
+    md: { line: 'h-3 md:h-4', yang: 'w-24 md:w-32', yinGap: 'w-24 md:w-32 [&>*]:w-9 md:[&>*]:w-12 [&>*]:h-3 md:[&>*]:h-4', space: 'my-1.5 md:my-2' },
+    lg: { line: 'h-3 md:h-4', yang: 'w-28 md:w-40', yinGap: 'w-28 md:w-40 [&>*]:w-10 md:[&>*]:w-14 [&>*]:h-3 md:[&>*]:h-4', space: 'my-2 md:my-3' },
   }[size]
 
   if (!yao) {

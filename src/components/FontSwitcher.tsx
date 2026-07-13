@@ -17,18 +17,18 @@ export default function FontSwitcher() {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md flex items-center gap-1"
+        className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md flex items-center gap-1"
         title="切换字体"
       >
-        <Type size={22} className="text-ink-light" />
-        <span className="text-sm text-ink-light hidden sm:inline">
+        <Type size={18} className="md:w-[22px] md:h-[22px] text-ink-light" />
+        <span className="text-xs md:text-sm text-ink-light hidden sm:inline">
           {FONTS.find(f => f.value === font)?.label}
         </span>
       </button>
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 bg-paper border border-paper-dark rounded-xl shadow-xl p-2 z-50 min-w-[160px]">
+          <div className="absolute right-0 top-full mt-1 md:mt-2 bg-paper border border-paper-dark rounded-xl shadow-xl p-1.5 md:p-2 z-50 min-w-[130px] md:min-w-[160px]">
             {FONTS.map((f) => (
               <button
                 key={f.value}
@@ -36,14 +36,14 @@ export default function FontSwitcher() {
                   setFont(f.value)
                   setOpen(false)
                 }}
-                className={`w-full px-4 py-2 rounded-lg text-left flex items-center gap-3 transition-colors ${
+                className={`w-full px-3 md:px-4 py-2 rounded-lg text-left flex items-center gap-2 md:gap-3 transition-colors ${
                   font === f.value 
                     ? 'bg-cinnabar/10 text-cinnabar' 
                     : 'hover:bg-paper-dark text-ink'
                 }`}
               >
-                <span className={`${f.previewClass} text-xl w-8 text-center`}>{f.label.charAt(0)}</span>
-                <span className="font-kai">{f.label}</span>
+                <span className={`${f.previewClass} text-lg md:text-xl w-6 md:w-8 text-center`}>{f.label.charAt(0)}</span>
+                <span className="font-kai text-sm md:text-base">{f.label}</span>
                 {font === f.value && <span className="ml-auto text-cinnabar">✓</span>}
               </button>
             ))}
