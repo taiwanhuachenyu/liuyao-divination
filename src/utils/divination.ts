@@ -1,5 +1,5 @@
 import { Solar } from 'lunar-typescript'
-import { Yao, Hexagram, NajiaItem, ChangedNajiaItem, Divination } from '../types'
+import { Yao, Hexagram, NajiaItem, ChangedNajiaItem, FushenItem, Divination } from '../types'
 import { getTrigramFromYaos, TRIGRAM_YAO_MAP, TRIGRAMS } from '../data/trigrams'
 import { HEXAGRAMS } from '../data/hexagrams'
 
@@ -198,7 +198,7 @@ function getGongAndShiYing(upperId: number, lowerId: number): { gongId: number; 
   return { gongId: upperId, shi: 2, ying: 5 }
 }
 
-function calculateNajia(hexagram: Hexagram, dayGan: number): { najia: NajiaItem[]; gongElement: string } {
+function calculateNajia(hexagram: Hexagram, dayGan: number): { najia: NajiaItem[]; gongId: number; gongElement: string } {
   const najia: NajiaItem[] = []
   const { gongId, shi, ying } = getGongAndShiYing(hexagram.upperTrigram.id, hexagram.lowerTrigram.id)
   const gongElement = TRIGRAMS[gongId - 1].element
@@ -219,7 +219,30 @@ function calculateNajia(hexagram: Hexagram, dayGan: number): { najia: NajiaItem[
     })
   }
 
-  return { najia, gongElement }
+  return { najia, gongId, gongElement }
+}
+
+const LIUQIN_ALL = ['父母', '兄弟', '子孙', '妻财', '官鬼']
+
+// 伏神：本卦六亲不全者，以本宫首卦（八纯卦）补之。
+// 依《增删卜易·飞伏神章》：首卦中所缺六亲所在爻位，即伏神伏于本卦同爻位飞神之下。
+function calculateFushen(gongId: number, najia: NajiaItem[]): FushenItem[] {
+  const gongElement = TRIGRAMS[gongId - 1].element
+  const gongNajia = NAJIA_GANZHI[TRIGRAMS[gongId - 1].name] || []
+  const present = new Set(najia.map(n => n.sixQin))
+  const missing = new Set(LIUQIN_ALL.filter(q => !present.has(q)))
+  if (missing.size === 0) return []
+
+  const fushen: FushenItem[] = []
+  for (let i = 0; i < 6; i++) {
+    const naJia = gongNajia[i]
+    const sixQin = getLiuqin(gongElement, yaoElementOf(naJia))
+    // 首卦此爻六亲恰为本卦所缺者，则伏于本卦同爻位之下
+    if (missing.has(sixQin)) {
+      fushen.push({ position: i, sixQin, naJia, feiNajia: najia[i]?.naJia || '' })
+    }
+  }
+  return fushen
 }
 
 // 变卦纳甲与六亲：纳甲取变卦本身，六亲仍以本卦之宫五行为准（回头生克）
@@ -275,8 +298,9 @@ export function createDivination(
   const selected = new Date(`${date}T${hh}:00:00`)
   const ganZhiDate = isNaN(selected.getTime()) ? new Date() : selected
   const { dayGanZhi, dayGan, monthJian, xunKong } = getGanZhiInfo(ganZhiDate)
-  const { najia, gongElement } = calculateNajia(original, dayGan)
+  const { najia, gongId, gongElement } = calculateNajia(original, dayGan)
   const changedNajia = changed ? calculateChangedNajia(changed, gongElement) : null
+  const fushen = calculateFushen(gongId, najia)
 
   return {
     id: crypto.randomUUID(),
@@ -289,6 +313,7 @@ export function createDivination(
     changed,
     najia,
     changedNajia,
+    fushen,
     dayGanZhi,
     monthJian,
     xunKong,

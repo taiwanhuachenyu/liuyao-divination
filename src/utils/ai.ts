@@ -10,46 +10,61 @@ const METHOD_NAMES: Record<Divination['method'], string> = {
   time: '天机起卦（梅花易数时间起卦）',
 }
 
+const POS = ['初', '二', '三', '四', '五', '上']
+
 function buildPrompt(divination: Divination, question: string): string {
-  const { original, changed, originalYao, method, najia, dayGanZhi, monthJian, xunKong } = divination
+  const { original, changed, originalYao, method, najia, changedNajia, fushen, dayGanZhi, monthJian, xunKong } = divination
   const changingYaos = originalYao.map((y, i: number) => y.changing ? i : -1).filter(i => i >= 0)
-  const changingDesc = changingYaos.length === 0 
-    ? '六爻安静，无动爻'
-    : `第${changingYaos.map(i => ['初','二','三','四','五','上'][i]).join('、')}爻动`
-  
+  const changingDesc = changingYaos.length === 0
+    ? '六爻安静，无动爻（以本卦卦爻辞及用神旺衰断之）'
+    : `第${changingYaos.map(i => POS[i]).join('、')}爻发动`
+
   const linesDesc = original.lines.map((line, idx: number) => {
     const yao = originalYao[idx]
-    const type = yao.yin ? (yao.changing ? '老阴×' : '少阴--') : (yao.changing ? '老阳○' : '少阳—')
+    const type = yao.yin ? (yao.changing ? '老阴×(动)' : '少阴--') : (yao.changing ? '老阳○(动)' : '少阳—')
     const item = najia[idx]
-    return `${['初','二','三','四','五','上'][idx]}爻 ${type} ${item.sixShen}${item.naJia}${item.sixQin} ${item.shi ? '世' : ''}${item.ying ? '应' : ''} ${line.text}`
+    const mark = `${item.shi ? '〔世〕' : ''}${item.ying ? '〔应〕' : ''}`
+    let head = `${POS[idx]}爻 ${item.sixShen} ${item.naJia} ${item.sixQin} ${type}${mark ? ' ' + mark : ''}`
+    const cn = yao.changing ? changedNajia?.[idx] : undefined
+    if (cn) {
+      head += ` → 变出 ${cn.sixQin}${cn.naJia}`
+    }
+    return `${head}  ${line.text}`
   }).join('\n')
 
-  return `你是一位精通周易六爻纳甲筮法的命理师，严格遵循京房纳甲古法断卦，请根据以下完整卦象信息进行详细解卦：
+  const fushenDesc = fushen && fushen.length > 0
+    ? fushen.map(f => `${f.sixQin}${f.naJia}（伏于${POS[f.position]}爻飞神${f.feiNajia}之下）`).join('；')
+    : '六亲俱全，无伏神'
 
-【重要断卦依据】
-月建：${monthJian}
-日辰：${dayGanZhi}日
-旬空：${xunKong}
-占问事项：${question || '（未填）'}
-起卦方式：${METHOD_NAMES[method] ?? method}
+  return `你是一位精通周易六爻纳甲筮法的国手，宗京房纳甲、法《卜筮正宗》《增删卜易》《黄金策》之古法，断卦严谨、引理有据。请依下列完整卦象详为剖断：
 
-本卦：${original.name}${original.symbol}，${original.upperTrigram.name}上${original.lowerTrigram.name}下
-${original.judgment}
-${changed ? `变卦：${changed.name}${changed.symbol}，${changed.upperTrigram.name}上${changed.lowerTrigram.name}下
-${changed.judgment}` : '无变卦'}
-动爻：${changingDesc}
+【占问事项】${question || '（未明言，请就卦象总体气数而论）'}
+【起卦方式】${METHOD_NAMES[method] ?? method}
 
-纳甲六爻排盘（从初爻到上爻）：
+【时令纲纪】
+月建：${monthJian}（司权，为提纲，主一月之旺衰）
+日辰：${dayGanZhi}日（主宰，能生克冲合卦爻，最为有力）
+旬空：${xunKong}（值旬空之爻为空亡，待冲空、填实之期而应）
+
+【卦体】
+本卦：${original.name}，${original.upperTrigram.name}上${original.lowerTrigram.name}下（${original.judgment}）
+${changed ? `变卦：${changed.name}，${changed.upperTrigram.name}上${changed.lowerTrigram.name}下（${changed.judgment}）` : '本卦无变（六爻安静）'}
+发动：${changingDesc}
+
+【纳甲装卦（初爻至上爻，六神·纳甲·六亲，动爻标其变出）】
 ${linesDesc}
 
-断卦要求：
-1. 先看月建日辰对各爻的生克旺衰，判断用神旺相休囚
-2. 看旬空，用神空亡则待时出空
-3. 看世应关系，世为自己，应为他人/事
-4. 看动爻变化，动必有因，变卦为发展趋势
-5. 结合六亲类象：父母主文书/长辈，官鬼主功名/疾病，妻财主财利/妻室，子孙主福德/晚辈，兄弟主竞争/破财
-6. 语言古典文雅但通俗易懂，给出明确吉凶判断和实际建议，500字左右
-7. 不要空泛套话，要紧扣卦象和占问事项具体分析：`
+【伏神】${fushenDesc}
+
+请依古法层层剖断，分条陈述：
+一、定用神：按所占之事择用神（求财问利取妻财，功名官讼疾病取官鬼，文书房宅尊长取父母，子女平安医药取子孙，手足朋辈竞争取兄弟）。用神不上卦者，察其伏神能否得飞神引拔、临日月而出伏。
+二、审旺衰：以月建为提纲、日辰为主宰，参年时，定用神、原神（生用神者）、忌神（克用神者）之旺相休囚死；旺相则吉，休囚受制则凶。
+三、察空破动变：用神逢旬空、月破则力弱待时；动爻生克冲合用神，变爻回头生扶为吉、回头克害为凶，化空化破化退亦须留意。
+四、看世应飞伏：世为求测者本身，应为对方或所测之事；伏神须辨飞伏生克（飞生伏为得长生，伏克飞为出暴，飞克伏为伤身）。
+五、断吉凶应期：综上明断吉凶成败，并以生旺墓绝、冲合、填实出空等定其应期（何月何日）。
+六、结合卦爻辞与六亲类象，紧扣所占之事，给出切实可行的趋避建议。
+
+要求：说理有据、层次分明，先总断吉凶再分述缘由，语言文雅而通俗，切忌空泛套话与模棱两可，约600字。`
 }
 
 export interface StreamCallbacks {
@@ -75,7 +90,7 @@ export async function aiDivination(
         messages: [
           {
             role: 'system',
-            content: '你是周易六爻解卦大师，精通京房纳甲、梅花易数，解卦准确有理有据，语言文雅通顺，符合传统易学逻辑。'
+            content: '你是周易六爻解卦国手，宗京房纳甲之学，深谙《卜筮正宗》《增删卜易》《黄金策》诸经，以用神为纲，参月建日辰之旺衰、动变飞伏之生克、空破墓绝之应期，断卦严谨、引理有据、切中肯綮。行文文雅通达，不作空泛套话，不模棱两可。'
           },
           {
             role: 'user',

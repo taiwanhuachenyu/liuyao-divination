@@ -46,6 +46,14 @@ export interface ChangedNajiaItem {
   sixQin: string
 }
 
+// 伏神：本卦六亲不全时，自本宫首卦补入，伏于同爻位飞神之下
+export interface FushenItem {
+  position: number
+  sixQin: string
+  naJia: string
+  feiNajia: string // 所伏之飞神（本卦该爻纳甲）
+}
+
 export interface Divination {
   id: string
   question: string
@@ -57,6 +65,7 @@ export interface Divination {
   changed: Hexagram | null
   najia: NajiaItem[]
   changedNajia?: ChangedNajiaItem[] | null
+  fushen?: FushenItem[]
   dayGanZhi: string
   monthJian: string
   xunKong: string

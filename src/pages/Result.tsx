@@ -30,7 +30,7 @@ export default function Result() {
     )
   }
 
-  const { original, changed, originalYao, changedYao, najia, changedNajia, question, date, dayGanZhi, monthJian, xunKong } = result
+  const { original, changed, originalYao, changedYao, najia, changedNajia, fushen, question, date, dayGanZhi, monthJian, xunKong } = result
   const reversedYaos = originalYao.slice().reverse()
   const reversedNajia = najia.slice().reverse()
   const changingYaos = originalYao.map((y, i) => y.changing ? i : -1).filter(i => i >= 0)
@@ -206,11 +206,29 @@ export default function Result() {
                   </div>
                 )
               })}
-              <div className="mt-5 md:mt-6 pt-3 border-t border-paper-dark/40 w-full flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] md:text-xs text-ink-light/70">
+              {fushen && fushen.length > 0 && (
+                <div className="mt-4 md:mt-5 pt-3 border-t border-paper-dark/40 w-full">
+                  <div className="flex items-baseline justify-center gap-2 mb-2">
+                    <span className="text-xs md:text-sm text-ocher tracking-widest font-medium">伏 神</span>
+                    <span className="text-[9px] md:text-[10px] text-ink-light/50">六亲不上卦，伏于本宫首卦之下</span>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+                    {fushen.map(f => (
+                      <span key={f.position} className="inline-flex items-baseline gap-1">
+                        <span className="text-sm md:text-base text-cinnabar font-medium">{f.sixQin}</span>
+                        <span className="text-xs md:text-sm text-indigo">{f.naJia}</span>
+                        <span className="text-[10px] md:text-xs text-ink-light/60">伏于{YAO_LABELS[f.position]}爻（{f.feiNajia}）之下</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="mt-4 md:mt-5 pt-3 border-t border-paper-dark/40 w-full flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] md:text-xs text-ink-light/70">
                 <span><span className="text-cinnabar font-bold">世</span> 自身、求测者</span>
                 <span><span className="text-indigo font-bold">应</span> 他人、所测之事</span>
                 <span><span className="text-cinnabar font-bold">○</span> 老阳（动）</span>
                 <span><span className="text-cinnabar font-bold">×</span> 老阴（动）</span>
+                <span><span className="text-ocher font-bold">伏</span> 伏神（不上卦之六亲）</span>
               </div>
             </div>
           </div>
