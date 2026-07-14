@@ -37,7 +37,7 @@
 - Zustand (状态管理)
 - React Router (HashRouter)
 - lunar-typescript (农历/干支/节气)
-- react-markdown + remark-gfm (AI 解读 Markdown 渲染)
+- react-markdown + remark-gfm + remark-cjk-friendly (AI 解读 Markdown 渲染，兼容中文加粗)
 - Lucide React (图标)
 
 ## 本地运行

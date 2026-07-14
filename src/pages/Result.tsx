@@ -3,6 +3,7 @@ import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, RefreshCw } from 'luc
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkCjkFriendly from 'remark-cjk-friendly'
 import { useDivinationStore } from '../store/useDivinationStore'
 import { getHexagramInterpretation } from '../utils/divination'
 import { aiDivination } from '../utils/ai'
@@ -512,7 +513,7 @@ export default function Result() {
                 <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-cinnabar/40"></div>
                 <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-cinnabar/40"></div>
                 <div className="relative">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm, remarkCjkFriendly]} components={mdComponents}>
                     {aiInterpretation}
                   </ReactMarkdown>
                 </div>
