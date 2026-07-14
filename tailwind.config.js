@@ -12,6 +12,7 @@ export default {
         paper: '#F5F0E6',
         indigo: '#2A5D7C',
         ocher: '#B5693A',
+        jade: '#3E7C5A',
         'paper-dark': '#E8DFD0',
         'ink-light': '#3D3D3D',
       },

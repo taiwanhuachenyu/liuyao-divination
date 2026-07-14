@@ -12,6 +12,24 @@ const yaoTitle = (pos: number, yin: boolean) => {
   return pos === 0 || pos === 5 ? `${YAO_LABELS[pos]}${num}` : `${num}${YAO_LABELS[pos]}`
 }
 
+// 旺衰配色：旺相有力用青碧，休囚死无力用淡墨
+const wsColor = (ws?: string) => (ws === '旺' || ws === '相' ? 'text-jade' : 'text-ink-light/50')
+// 爻情标记配色
+const TAG_STYLE: Record<string, string> = {
+  '月破': 'text-cinnabar bg-cinnabar/10',
+  '日破': 'text-cinnabar bg-cinnabar/10',
+  '反吟': 'text-cinnabar bg-cinnabar/10',
+  '旬空': 'text-ocher bg-ocher/10',
+  '暗动': 'text-jade bg-jade/10',
+  '进神': 'text-jade bg-jade/10',
+  '退神': 'text-ink-light bg-ink/5',
+  '伏吟': 'text-indigo bg-indigo/10',
+}
+const tagStyle = (t: string) => TAG_STYLE[t] || 'text-ink-light bg-ink/5'
+// 卦体关系配色：六冲朱红、六合青碧、反吟朱红、伏吟靛蓝
+const relationStyle = (r?: string | null) =>
+  r === '六合' ? 'text-jade bg-jade/10 border-jade/30' : 'text-cinnabar bg-cinnabar/10 border-cinnabar/30'
+
 export default function Result() {
   const navigate = useNavigate()
   const { result, reset, aiInterpretation, aiLoading, appendAiInterpretation, setAiInterpretation, setAiLoading } = useDivinationStore()
@@ -30,7 +48,7 @@ export default function Result() {
     )
   }
 
-  const { original, changed, originalYao, changedYao, najia, changedNajia, fushen, question, date, dayGanZhi, monthJian, xunKong } = result
+  const { original, changed, originalYao, changedYao, najia, changedNajia, fushen, originalRelation, changedRelation, yinTags, question, date, dayGanZhi, monthJian, xunKong } = result
   const reversedYaos = originalYao.slice().reverse()
   const reversedNajia = najia.slice().reverse()
   const changingYaos = originalYao.map((y, i) => y.changing ? i : -1).filter(i => i >= 0)
@@ -153,7 +171,12 @@ export default function Result() {
             <h3 className="text-xl md:text-2xl text-center mb-4 md:mb-6 text-cinnabar tracking-widest">本 卦</h3>
             <div className="text-center mb-5 md:mb-8">
               <div className="text-5xl md:text-7xl mb-2 md:mb-4 text-ink">{original.symbol}</div>
-              <div className="text-2xl md:text-3xl text-ink glow-text">{original.name}</div>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                <span className="text-2xl md:text-3xl text-ink glow-text">{original.name}</span>
+                {originalRelation && (
+                  <span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full border ${relationStyle(originalRelation)}`}>{originalRelation}</span>
+                )}
+              </div>
               <div className="text-ink-light mt-2 md:mt-3 text-sm md:text-lg">
                 <span className="trigram-symbol mr-1 md:mr-2">{original.upperTrigram.symbol}</span>上{original.upperTrigram.name}
                 <span className="mx-2 md:mx-3 text-ink">|</span>
@@ -201,7 +224,10 @@ export default function Result() {
                     </div>
                     <div className="w-14 md:w-20 text-left leading-tight">
                       <div className="text-sm md:text-base text-cinnabar">{info.sixQin}</div>
-                      <div className="text-[10px] md:text-xs text-ink-light">{yaoTitle(pos, yao.yin)}</div>
+                      <div className="text-[10px] md:text-xs text-ink-light">
+                        {yaoTitle(pos, yao.yin)}
+                        {info.wangShuai && <span className={`ml-1 ${wsColor(info.wangShuai)}`}>{info.wangShuai}</span>}
+                      </div>
                     </div>
                   </div>
                 )
@@ -223,12 +249,31 @@ export default function Result() {
                   </div>
                 </div>
               )}
+              {najia.some(n => n.tags && n.tags.length > 0) && (
+                <div className="mt-4 md:mt-5 pt-3 border-t border-paper-dark/40 w-full">
+                  <div className="flex items-baseline justify-center gap-2 mb-2">
+                    <span className="text-xs md:text-sm text-ocher tracking-widest font-medium">爻 情</span>
+                    <span className="text-[9px] md:text-[10px] text-ink-light/50">逐爻旺衰见右，下列其动态吉凶</span>
+                  </div>
+                  <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5">
+                    {najia.filter(n => n.tags && n.tags.length > 0).map(n => (
+                      <span key={n.position} className="inline-flex items-center gap-1">
+                        <span className="text-[10px] md:text-xs text-ink-light">{YAO_LABELS[n.position]}爻</span>
+                        {n.tags!.map(t => (
+                          <span key={t} className={`text-[10px] md:text-xs px-1.5 py-0.5 rounded ${tagStyle(t)}`}>{t}</span>
+                        ))}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="mt-4 md:mt-5 pt-3 border-t border-paper-dark/40 w-full flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px] md:text-xs text-ink-light/70">
                 <span><span className="text-cinnabar font-bold">世</span> 自身、求测者</span>
                 <span><span className="text-indigo font-bold">应</span> 他人、所测之事</span>
                 <span><span className="text-cinnabar font-bold">○</span> 老阳（动）</span>
                 <span><span className="text-cinnabar font-bold">×</span> 老阴（动）</span>
-                <span><span className="text-ocher font-bold">伏</span> 伏神（不上卦之六亲）</span>
+                <span><span className="text-ocher font-bold">伏</span> 伏神</span>
+                <span><span className="text-jade font-bold">旺相</span>·<span className="text-ink-light/50">休囚死</span> 爻之旺衰</span>
               </div>
             </div>
           </div>
@@ -239,7 +284,15 @@ export default function Result() {
               <h3 className="text-xl md:text-2xl text-center mb-4 md:mb-6 text-ocher tracking-widest">变 卦</h3>
               <div className="text-center mb-5 md:mb-8">
                 <div className="text-5xl md:text-7xl mb-2 md:mb-4 text-ink/80">{changed.symbol}</div>
-                <div className="text-2xl md:text-3xl text-ink">{changed.name}</div>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <span className="text-2xl md:text-3xl text-ink">{changed.name}</span>
+                  {changedRelation && (
+                    <span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full border ${relationStyle(changedRelation)}`}>{changedRelation}</span>
+                  )}
+                  {yinTags && yinTags.map(t => (
+                    <span key={t} className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full border ${t.includes('反吟') ? 'text-cinnabar bg-cinnabar/10 border-cinnabar/30' : 'text-indigo bg-indigo/10 border-indigo/30'}`}>{t}</span>
+                  ))}
+                </div>
                 <div className="text-ink-light mt-2 md:mt-3 text-sm md:text-lg">
                   <span className="trigram-symbol mr-1 md:mr-2">{changed.upperTrigram.symbol}</span>上{changed.upperTrigram.name}
                   <span className="mx-2 md:mx-3 text-ink">|</span>

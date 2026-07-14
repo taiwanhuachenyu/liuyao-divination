@@ -37,6 +37,8 @@ export interface NajiaItem {
   naJia: string
   shi: boolean
   ying: boolean
+  wangShuai?: string  // 旺/相/休/囚/死（以月建定）
+  tags?: string[]     // 月破/旬空/暗动/日破/进神/退神/伏吟/反吟
 }
 
 // 变卦纳甲与六亲（六亲以本卦之宫为准，用于回头生克）
@@ -66,6 +68,9 @@ export interface Divination {
   najia: NajiaItem[]
   changedNajia?: ChangedNajiaItem[] | null
   fushen?: FushenItem[]
+  originalRelation?: '六冲' | '六合' | null  // 本卦卦体
+  changedRelation?: '六冲' | '六合' | null   // 变卦卦体
+  yinTags?: string[]                          // 卦反吟/伏吟（内卦/外卦）
   dayGanZhi: string
   monthJian: string
   xunKong: string

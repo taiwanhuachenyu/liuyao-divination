@@ -25,6 +25,34 @@ const ZHI_WUXING: Record<string, string> = {
 const WUXING_SHENG: Record<string, string> = { '金': '水', '水': '木', '木': '火', '火': '土', '土': '金' }
 const WUXING_KE: Record<string, string> = { '金': '木', '木': '土', '土': '水', '水': '火', '火': '金' }
 
+const DI_ZHI_ORDER = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
+const zhiOf = (naJia: string) => naJia?.slice(1) || ''
+// 地支相冲：相隔六位（子午、丑未、寅申、卯酉、辰戌、巳亥）
+const isChongZhi = (a: string, b: string) => {
+  const ia = DI_ZHI_ORDER.indexOf(a), ib = DI_ZHI_ORDER.indexOf(b)
+  return ia >= 0 && ib >= 0 && (ia - ib + 12) % 12 === 6
+}
+// 地支六合：子丑、寅亥、卯戌、辰酉、巳申、午未
+const HE_MAP: Record<string, string> = {
+  '子': '丑', '丑': '子', '寅': '亥', '亥': '寅', '卯': '戌', '戌': '卯',
+  '辰': '酉', '酉': '辰', '巳': '申', '申': '巳', '午': '未', '未': '午',
+}
+const isHeZhi = (a: string, b: string) => HE_MAP[a] === b
+// 化进神／退神（同五行地支顺进为进、逆退为退）
+const JINSHEN: Record<string, string> = { '寅': '卯', '巳': '午', '申': '酉', '亥': '子', '丑': '辰', '辰': '未', '未': '戌', '戌': '丑' }
+const TUISHEN: Record<string, string> = { '卯': '寅', '午': '巳', '酉': '申', '子': '亥', '辰': '丑', '未': '辰', '戌': '未', '丑': '戌' }
+
+// 以月建（月令）定爻之旺相休囚死
+function wangShuaiByMonth(yaoEl: string, monthEl: string): string {
+  if (yaoEl === monthEl) return '旺'
+  if (WUXING_SHENG[monthEl] === yaoEl) return '相'
+  if (WUXING_SHENG[yaoEl] === monthEl) return '休'
+  if (WUXING_KE[yaoEl] === monthEl) return '囚'
+  if (WUXING_KE[monthEl] === yaoEl) return '死'
+  return '—'
+}
+const isWangXiang = (ws: string) => ws === '旺' || ws === '相'
+
 // 以宫的五行为准，判定某爻地支五行的六亲
 function getLiuqin(gongElement: string, yaoElement: string): string {
   if (yaoElement === gongElement) return '兄弟'
@@ -254,6 +282,64 @@ function calculateChangedNajia(changed: Hexagram, gongElement: string): ChangedN
   }))
 }
 
+// 逐爻旺衰与动态标记：月破、旬空、暗动/日破、进神/退神、爻伏吟/爻反吟
+function computeYaoStates(
+  najia: NajiaItem[],
+  originalYao: Yao[],
+  changedNajia: ChangedNajiaItem[] | null,
+  monthZhi: string,
+  dayZhi: string,
+  kongZhi: string[],
+): void {
+  const monthEl = ZHI_WUXING[monthZhi] || ''
+  najia.forEach((item, i) => {
+    const zhi = zhiOf(item.naJia)
+    item.wangShuai = wangShuaiByMonth(ZHI_WUXING[zhi] || '', monthEl)
+    const tags: string[] = []
+    const kong = kongZhi.includes(zhi)
+    const yuePo = isChongZhi(zhi, monthZhi)
+    if (kong) tags.push('旬空')
+    if (yuePo) tags.push('月破')
+    const moving = originalYao[i]?.changing
+    // 静爻逢日辰冲：旺相为暗动，休囚为日破（月破、旬空者另论，不计）
+    if (!moving && !kong && !yuePo && isChongZhi(zhi, dayZhi)) {
+      tags.push(isWangXiang(item.wangShuai) ? '暗动' : '日破')
+    }
+    // 动爻之化：进退神、爻伏吟（化同支）、爻反吟（化冲支）
+    if (moving && changedNajia?.[i]) {
+      const bZhi = zhiOf(changedNajia[i].naJia)
+      if (bZhi === zhi) tags.push('伏吟')
+      else if (isChongZhi(zhi, bZhi)) tags.push('反吟')
+      if (JINSHEN[zhi] === bZhi) tags.push('进神')
+      else if (TUISHEN[zhi] === bZhi) tags.push('退神')
+    }
+    item.tags = tags
+  })
+}
+
+// 卦体六冲／六合：初四、二五、三上三对地支皆冲为六冲，皆合为六合
+function hexagramRelation(naJiaArr: string[]): '六冲' | '六合' | null {
+  const pairs: [number, number][] = [[0, 3], [1, 4], [2, 5]]
+  if (pairs.every(([a, b]) => isChongZhi(zhiOf(naJiaArr[a]), zhiOf(naJiaArr[b])))) return '六冲'
+  if (pairs.every(([a, b]) => isHeZhi(zhiOf(naJiaArr[a]), zhiOf(naJiaArr[b])))) return '六合'
+  return null
+}
+
+// 卦反吟／伏吟：内卦（初二三）或外卦（四五上）三爻俱动，且变出之支与本支全同（伏吟）或全冲（反吟）
+function hexagramYinTags(najia: NajiaItem[], changedNajia: ChangedNajiaItem[] | null, originalYao: Yao[]): string[] {
+  if (!changedNajia) return []
+  const tags: string[] = []
+  const check = (positions: number[], name: string) => {
+    // 该卦（内/外）须有动爻，且变出之支与本支全同为伏吟、全冲为反吟
+    if (!positions.some(i => originalYao[i]?.changing)) return
+    if (positions.every(i => zhiOf(najia[i].naJia) === zhiOf(changedNajia[i].naJia))) tags.push(`${name}伏吟`)
+    else if (positions.every(i => isChongZhi(zhiOf(najia[i].naJia), zhiOf(changedNajia[i].naJia)))) tags.push(`${name}反吟`)
+  }
+  check([0, 1, 2], '内卦')
+  check([3, 4, 5], '外卦')
+  return tags
+}
+
 const YAO_POSITION_LABELS = ['初', '二', '三', '四', '五', '上']
 
 export function getHexagramInterpretation(hexagram: Hexagram, changed: Hexagram | null, changingYaos: number[]): string[] {
@@ -302,6 +388,17 @@ export function createDivination(
   const changedNajia = changed ? calculateChangedNajia(changed, gongElement) : null
   const fushen = calculateFushen(gongId, najia)
 
+  // 逐爻旺衰与动态标记（月破/旬空/暗动/日破/进退神/爻伏吟反吟）
+  const monthZhi = monthJian.charAt(0)
+  const dayZhi = dayGanZhi.charAt(1)
+  const kongZhi = xunKong.replace('空', '').split('')
+  computeYaoStates(najia, originalYao, changedNajia, monthZhi, dayZhi, kongZhi)
+
+  // 卦体标记：本卦/变卦六冲六合、卦反吟伏吟
+  const originalRelation = hexagramRelation(najia.map(n => n.naJia))
+  const changedRelation = changed && changedNajia ? hexagramRelation(changedNajia.map(n => n.naJia)) : null
+  const yinTags = hexagramYinTags(najia, changedNajia, originalYao)
+
   return {
     id: crypto.randomUUID(),
     question,
@@ -314,6 +411,9 @@ export function createDivination(
     najia,
     changedNajia,
     fushen,
+    originalRelation,
+    changedRelation,
+    yinTags,
     dayGanZhi,
     monthJian,
     xunKong,
