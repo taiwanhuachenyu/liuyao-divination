@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { History, RotateCcw, Sparkles, Clock } from 'lucide-react'
 import { useDivinationStore } from '../store/useDivinationStore'
-import { createDivination, timeDivination } from '../utils/divination'
+import { createDivination, timeDivination, tossCoins } from '../utils/divination'
 import Coin from '../components/Coin'
 import YaoLine from '../components/YaoLine'
 import HistoryDrawer from '../components/HistoryDrawer'
@@ -64,7 +64,7 @@ export default function Home() {
   }, [currentStep, isFlipping, method, navigate])
 
   const handleMethodChange = (m: 'coins' | 'manual' | 'time') => {
-    reset()
+    // setMethod 已重置 yaos 与 currentStep；此处不调用 reset()，以保留用户已填写的占问事项
     setMethod(m)
     setCoinResults(null)
   }
@@ -73,16 +73,9 @@ export default function Home() {
     if (isFlipping || currentStep >= 6) return
     setIsFlipping(true)
     setCoinResults(null)
-    
+
     setTimeout(() => {
-      const coins = [Math.random() > 0.5, Math.random() > 0.5, Math.random() > 0.5]
-      const heads = coins.filter(c => c).length
-      let yin = false, changing = false
-      if (heads === 0) { yin = false; changing = true }
-      else if (heads === 3) { yin = true; changing = true }
-      else if (heads === 2) { yin = true; changing = false }
-      else { yin = false; changing = false }
-      
+      const { coins, yin, changing } = tossCoins()
       setCoinResults(coins)
       addYao(yin, changing)
       setTimeout(() => {
@@ -145,6 +138,7 @@ export default function Home() {
               onClick={() => setHistoryOpen(true)}
               className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md"
               title="历史记录"
+              aria-label="查看历史记录"
             >
               <History size={22} className="md:w-[26px] md:h-[26px] text-ink-light" />
             </button>

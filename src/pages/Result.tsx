@@ -187,10 +187,10 @@ export default function Result() {
             卦象详情
           </h1>
           <div className="flex gap-1">
-            <button onClick={handleShare} className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md" title="分享">
+            <button onClick={handleShare} className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md" title="分享" aria-label="分享卦象">
               <Share2 size={18} className="md:w-[22px] md:h-[22px] text-ink-light" />
             </button>
-            <button onClick={handleNew} className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md" title="重新起卦">
+            <button onClick={handleNew} className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md" title="重新起卦" aria-label="重新起卦">
               <RotateCcw size={18} className="md:w-[22px] md:h-[22px] text-ink-light" />
             </button>
           </div>

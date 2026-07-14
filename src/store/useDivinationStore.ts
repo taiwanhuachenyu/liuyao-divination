@@ -23,7 +23,6 @@ interface DivinationState {
   setIsFlipping: (f: boolean) => void
   setResult: (r: Divination | null) => void
   reset: () => void
-  setCurrentStep: (s: number) => void
   loadFromHistory: (d: Divination) => void
   deleteHistory: (id: string) => void
   appendAiInterpretation: (token: string) => void
@@ -70,7 +69,6 @@ export const useDivinationStore = create<DivinationState>()(
         aiLoading: false
       })),
       reset: () => set({ yaos: Array(6).fill(null), currentStep: 0, result: null, question: '', aiInterpretation: '', aiLoading: false }),
-      setCurrentStep: (s) => set({ currentStep: s }),
       loadFromHistory: (d) => set({ result: d, aiInterpretation: '', aiLoading: false }),
       deleteHistory: (id) => set((state) => ({
         history: state.history.filter(h => h.id !== id)

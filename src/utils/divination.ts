@@ -72,13 +72,21 @@ function najiaOf(hexagram: Hexagram): string[] {
 
 const yaoElementOf = (naJia: string) => ZHI_WUXING[naJia?.slice(1) || ''] || '木'
 
-export function tossCoins(): { yin: boolean; changing: boolean } {
+// 生成唯一 id：优先 crypto.randomUUID，老浏览器（Safari <15.4）降级
+function genId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+export function tossCoins(): { coins: boolean[]; yin: boolean; changing: boolean } {
   const coins = [Math.random() > 0.5, Math.random() > 0.5, Math.random() > 0.5]
   const heads = coins.filter(c => c).length
-  if (heads === 0) return { yin: false, changing: true }
-  if (heads === 3) return { yin: true, changing: true }
-  if (heads === 1) return { yin: false, changing: false }
-  return { yin: true, changing: false }
+  if (heads === 0) return { coins, yin: false, changing: true }
+  if (heads === 3) return { coins, yin: true, changing: true }
+  if (heads === 1) return { coins, yin: false, changing: false }
+  return { coins, yin: true, changing: false }
 }
 
 function getHourZhi(hour: number): number {
@@ -450,7 +458,7 @@ export function createDivination(
     : originalRelation === '六冲' && changedRelation === '六合' ? '冲中逢合' : ''
 
   return {
-    id: crypto.randomUUID(),
+    id: genId(),
     question,
     date: `${date} ${dayGanZhi}日 ${monthJian} ${xunKong}`,
     method,

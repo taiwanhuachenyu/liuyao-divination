@@ -33,7 +33,7 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
       <div className={`fixed top-0 right-0 h-full w-[85vw] max-w-xs md:w-80 bg-paper shadow-2xl z-50 transform transition-transform duration-300 border-l border-paper-dark ${open ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-3 md:p-4 border-b border-paper-dark flex items-center justify-between">
           <h2 className="text-lg md:text-xl text-ink">历史记录</h2>
-          <button onClick={onClose} className="p-2 hover:bg-paper-dark rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-paper-dark rounded-full transition-colors" title="关闭" aria-label="关闭历史记录">
             <X size={20} />
           </button>
         </div>
@@ -58,6 +58,8 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
                     <button 
                       onClick={() => deleteHistory(d.id)}
                       className="p-1 text-ink-light hover:text-cinnabar transition-colors"
+                      title="删除此记录"
+                      aria-label={`删除记录 ${d.original.name}`}
                     >
                       <Trash2 size={16} />
                     </button>
