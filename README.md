@@ -10,12 +10,17 @@
   - 天机起卦：梅花易数时间起卦
 
 - **完整排盘信息**
-  - 本卦、变卦展示
+  - 本卦、变卦展示（左右对称排盘，爻线对齐、配色一致）
   - 纳甲、六亲、六神
   - 世爻、应爻定位
   - 动爻标记（老阳○、老阴×）
+  - 变卦回头纳甲与六亲（以本卦之宫论）
   - 卦辞、爻辞展示
   - 卦象解析断语
+
+- **AI 智能解卦**
+  - 一键请大师解卦，流式输出实时呈现
+  - 解读结果以 Markdown 富文本渲染（标题、加粗、列表、表格等），古风排版
 
 - **界面特色**
   - 新中式古风美学，宣纸纹理背景
@@ -30,7 +35,9 @@
 - Vite
 - TailwindCSS
 - Zustand (状态管理)
-- React Router
+- React Router (HashRouter)
+- lunar-typescript (农历/干支/节气)
+- react-markdown + remark-gfm (AI 解读 Markdown 渲染)
 - Lucide React (图标)
 
 ## 本地运行
@@ -44,8 +51,20 @@ npm run dev
 
 # 构建生产版本
 npm run build
+
+# 代码检查
+npm run lint
 ```
+
+开发服务器启动后，浏览器访问 `http://localhost:5173/liuyao-divination/` 即可预览（已配置 `base` 路径）。
 
 ## 在线使用
 
-打开浏览器访问 `http://localhost:5173/liuyao-divination/` 即可使用（开发服务器已配置 `base` 路径）。
+线上地址：<https://taiwanhuachenyu.github.io/liuyao-divination/#/>
+
+## 部署
+
+推送到 `main` 分支后，GitHub Actions（`.github/workflows/deploy.yml`）自动构建并发布到 GitHub Pages。
+
+- 使用 `HashRouter`，适配 GitHub Pages 无服务端路由的静态托管
+- Vite `base` 设为 `/liuyao-divination/`，与仓库名一致

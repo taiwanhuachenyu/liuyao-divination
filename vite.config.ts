@@ -16,6 +16,8 @@ export default defineConfig({
         manualChunks: {
           // 农历/节气库体积较大，单独拆分以便浏览器缓存
           lunar: ['lunar-typescript'],
+          // Markdown 渲染链路（react-markdown + remark + micromark）体积较大，同样拆分
+          markdown: ['react-markdown', 'remark-gfm'],
         },
       },
     },

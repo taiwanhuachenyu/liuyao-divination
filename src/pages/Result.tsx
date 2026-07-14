@@ -1,5 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, RefreshCw } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import type { Components } from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useDivinationStore } from '../store/useDivinationStore'
 import { getHexagramInterpretation } from '../utils/divination'
 import { aiDivination } from '../utils/ai'
@@ -29,6 +32,56 @@ const tagStyle = (t: string) => TAG_STYLE[t] || 'text-ink-light bg-ink/5'
 // 卦体关系配色：六冲朱红、六合青碧、反吟朱红、伏吟靛蓝
 const relationStyle = (r?: string | null) =>
   r === '六合' ? 'text-jade bg-jade/10 border-jade/30' : 'text-cinnabar bg-cinnabar/10 border-cinnabar/30'
+
+// AI 解读 markdown 渲染：古风配色与排版
+const mdComponents: Components = {
+  h1: ({ children }) => (
+    <h1 className="text-xl md:text-2xl text-cinnabar tracking-widest mt-5 mb-3 pb-1.5 border-b border-cinnabar/20 first:mt-0">{children}</h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="text-lg md:text-xl text-cinnabar tracking-wider mt-5 mb-2.5 flex items-center gap-2 first:mt-0">
+      <span className="inline-block w-1 h-4 md:h-5 bg-cinnabar rounded-full" />{children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="text-base md:text-lg text-ocher font-medium tracking-wide mt-4 mb-2 first:mt-0">{children}</h3>
+  ),
+  p: ({ children }) => (
+    <p className="text-base md:text-lg leading-loose text-ink my-2.5">{children}</p>
+  ),
+  strong: ({ children }) => <strong className="text-cinnabar font-semibold">{children}</strong>,
+  em: ({ children }) => <em className="text-ocher not-italic font-medium">{children}</em>,
+  ul: ({ children }) => <ul className="my-2.5 space-y-1.5 pl-1">{children}</ul>,
+  ol: ({ children }) => <ol className="my-2.5 space-y-1.5 pl-5 list-decimal marker:text-cinnabar">{children}</ol>,
+  li: ({ children }) => (
+    <li className="text-base md:text-lg leading-relaxed text-ink marker:text-cinnabar">{children}</li>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="my-3 pl-4 py-1 border-l-4 border-ocher/40 bg-ocher/5 rounded-r text-ink-light italic">{children}</blockquote>
+  ),
+  hr: () => <hr className="my-4 border-none h-px bg-gradient-to-r from-transparent via-cinnabar/25 to-transparent" />,
+  pre: ({ children }) => (
+    <pre className="my-3 p-3 rounded-lg bg-ink/90 text-paper text-sm overflow-x-auto">{children}</pre>
+  ),
+  code: ({ children }) => (
+    <code className="px-1.5 py-0.5 rounded bg-paper-dark/60 text-indigo text-sm">{children}</code>
+  ),
+  a: ({ children, href }) => (
+    <a href={href} target="_blank" rel="noreferrer" className="text-indigo underline decoration-indigo/40 hover:decoration-indigo">{children}</a>
+  ),
+  table: ({ children }) => (
+    <div className="my-3 overflow-x-auto">
+      <table className="w-full border-collapse text-sm md:text-base">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-cinnabar/8">{children}</thead>,
+  th: ({ children }) => (
+    <th className="border border-paper-dark px-3 py-1.5 text-cinnabar font-medium text-left">{children}</th>
+  ),
+  td: ({ children }) => (
+    <td className="border border-paper-dark/60 px-3 py-1.5 text-ink">{children}</td>
+  ),
+}
 
 export default function Result() {
   const navigate = useNavigate()
@@ -303,9 +356,9 @@ export default function Result() {
               <div className="absolute top-0 right-0 text-5xl md:text-8xl opacity-5">{changed.symbol}</div>
               <h3 className="text-xl md:text-2xl text-center mb-4 md:mb-6 text-ocher tracking-widest">变 卦</h3>
               <div className="text-center mb-5 md:mb-8">
-                <div className="text-5xl md:text-7xl mb-2 md:mb-4 text-ink/80">{changed.symbol}</div>
+                <div className="text-5xl md:text-7xl mb-2 md:mb-4 text-ink">{changed.symbol}</div>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
-                  <span className="text-2xl md:text-3xl text-ink">{changed.name}</span>
+                  <span className="text-2xl md:text-3xl text-ink glow-text">{changed.name}</span>
                   {changedRelation && (
                     <span className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full border ${relationStyle(changedRelation)}`}>{changedRelation}</span>
                   )}
@@ -326,34 +379,36 @@ export default function Result() {
                 </div>
               </div>
               <div className="flex flex-col items-center">
-                <div className="flex items-center justify-center gap-2 md:gap-3 mb-2 md:mb-3 pb-2 border-b border-paper-dark/40 text-[10px] md:text-xs text-ink-light/70 tracking-wide">
-                  <div className="w-14 md:w-16 text-right">变爻六亲·纳甲</div>
-                  <div className="w-20 md:w-28 text-center">卦 象</div>
-                  <div className="w-8 md:w-10 text-left">爻题</div>
+                <div className="flex items-center justify-center gap-1.5 md:gap-3 mb-2 md:mb-3 pb-2 border-b border-paper-dark/40 text-[10px] md:text-xs text-ink-light/70 tracking-wide">
+                  <div className="w-14 md:w-20 text-right">变六亲 · 纳甲</div>
+                  <div className="w-24 md:w-36 text-center">卦 象</div>
+                  <div className="w-14 md:w-20 text-left">爻 题</div>
                 </div>
                 {changedYao.slice().reverse().map((yao, idx) => {
                   const pos = 5 - idx
                   const isChangedYao = originalYao[pos].changing
                   const cn = changedNajia?.[pos]
                   return (
-                    <div key={pos} className="flex items-center justify-center gap-2 md:gap-3 my-1.5 md:my-2.5">
-                      <div className="w-14 md:w-16 text-right leading-tight">
+                    <div key={pos} className="flex items-center justify-center gap-1.5 md:gap-3 my-1.5 md:my-2.5 animate-yao-reveal" style={{ animationDelay: `${idx * 80}ms` }}>
+                      <div className="w-14 md:w-20 text-right leading-tight">
                         {isChangedYao && cn && (
                           <>
-                            <div className="text-xs md:text-sm text-ocher">{cn.sixQin}</div>
+                            <div className="text-sm md:text-base text-ocher">{cn.sixQin}</div>
                             <div className="text-[10px] md:text-xs text-indigo">{cn.naJia}</div>
                           </>
                         )}
                       </div>
                       {yao.yin ? (
-                        <div className="h-3 md:h-4 w-20 md:w-28 flex justify-between shrink-0">
-                          <div className={`w-7 md:w-11 h-full rounded shadow-sm ${isChangedYao ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
-                          <div className={`w-7 md:w-11 h-full rounded shadow-sm ${isChangedYao ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
+                        <div className="h-3 md:h-4 w-24 md:w-36 flex justify-between shrink-0">
+                          <div className={`w-9 md:w-14 h-full rounded shadow-md ${isChangedYao ? 'bg-ocher shadow-ocher/40' : 'bg-ink/40'}`} />
+                          <div className={`w-9 md:w-14 h-full rounded shadow-md ${isChangedYao ? 'bg-ocher shadow-ocher/40' : 'bg-ink/40'}`} />
                         </div>
                       ) : (
-                        <div className={`h-3 md:h-4 w-20 md:w-28 rounded shadow-sm shrink-0 ${isChangedYao ? 'bg-ocher shadow-ocher/30' : 'bg-ink/50'}`} />
+                        <div className={`h-3 md:h-4 w-24 md:w-36 rounded shadow-md shrink-0 ${isChangedYao ? 'bg-ocher shadow-ocher/40' : 'bg-ink/40'}`} />
                       )}
-                      <span className={`w-8 md:w-10 text-left text-xs md:text-sm ${isChangedYao ? 'text-ocher font-medium' : 'text-ink-light'}`}>{yaoTitle(pos, yao.yin)}</span>
+                      <div className="w-14 md:w-20 text-left leading-tight">
+                        <div className={`text-sm md:text-base ${isChangedYao ? 'text-ocher font-medium' : 'text-ink-light'}`}>{yaoTitle(pos, yao.yin)}</div>
+                      </div>
                     </div>
                   )
                 })}
@@ -453,9 +508,11 @@ export default function Result() {
                 <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-cinnabar/40"></div>
                 <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-cinnabar/40"></div>
                 <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-cinnabar/40"></div>
-                <p className="text-base md:text-lg leading-loose text-ink whitespace-pre-wrap indent-8">
-                  {aiInterpretation}
-                </p>
+                <div className="relative">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                    {aiInterpretation}
+                  </ReactMarkdown>
+                </div>
               </div>
               <div className="flex justify-end gap-3 mt-4">
                 <button 
