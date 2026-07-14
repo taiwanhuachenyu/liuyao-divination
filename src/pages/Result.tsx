@@ -48,7 +48,7 @@ export default function Result() {
     )
   }
 
-  const { original, changed, originalYao, changedYao, najia, changedNajia, fushen, originalRelation, changedRelation, yinTags, question, date, dayGanZhi, monthJian, xunKong } = result
+  const { original, changed, originalYao, changedYao, najia, changedNajia, fushen, originalRelation, changedRelation, yinTags, gongName, world, heju, guaShen, chongHe, question, date, dayGanZhi, monthJian, xunKong } = result
   const reversedYaos = originalYao.slice().reverse()
   const reversedNajia = najia.slice().reverse()
   const changingYaos = originalYao.map((y, i) => y.changing ? i : -1).filter(i => i >= 0)
@@ -185,6 +185,26 @@ export default function Result() {
               <div className="text-ink-light/70 mt-1 text-xs md:text-sm">
                 {original.upperTrigram.nature}{original.lowerTrigram.nature} | {original.upperTrigram.element}{original.lowerTrigram.element}
               </div>
+              {(gongName || guaShen) && (
+                <div className="mt-1.5 md:mt-2 text-xs md:text-sm text-indigo">
+                  {gongName && <span className="font-medium">{gongName} · {world}卦</span>}
+                  {guaShen && (
+                    <span className="ml-2 text-ink-light/70">
+                      卦身 <span className="text-ocher">{guaShen.zhi}</span>
+                      {guaShen.positions.length > 0
+                        ? `（持${guaShen.positions.map(i => YAO_LABELS[i]).join('、')}爻）`
+                        : '（不上卦）'}
+                    </span>
+                  )}
+                </div>
+              )}
+              {heju && heju.length > 0 && (
+                <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+                  {heju.map(h => (
+                    <span key={h} className="text-[10px] md:text-xs px-2 py-0.5 rounded-full border text-jade bg-jade/10 border-jade/30">{h}</span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex flex-col items-center">
               <div className="flex items-center justify-center gap-1.5 md:gap-3 mb-2 md:mb-3 pb-2 border-b border-paper-dark/40 text-[10px] md:text-xs text-ink-light/70 tracking-wide">
@@ -292,6 +312,9 @@ export default function Result() {
                   {yinTags && yinTags.map(t => (
                     <span key={t} className={`text-[10px] md:text-xs px-2 py-0.5 rounded-full border ${t.includes('反吟') ? 'text-cinnabar bg-cinnabar/10 border-cinnabar/30' : 'text-indigo bg-indigo/10 border-indigo/30'}`}>{t}</span>
                   ))}
+                  {chongHe && (
+                    <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full border text-ocher bg-ocher/10 border-ocher/30">{chongHe}</span>
+                  )}
                 </div>
                 <div className="text-ink-light mt-2 md:mt-3 text-sm md:text-lg">
                   <span className="trigram-symbol mr-1 md:mr-2">{changed.upperTrigram.symbol}</span>上{changed.upperTrigram.name}

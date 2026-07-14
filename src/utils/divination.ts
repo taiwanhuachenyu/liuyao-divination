@@ -188,7 +188,7 @@ export function getChangedHexagram(originalYaos: Yao[]): { hexagram: Hexagram | 
   return { hexagram: getHexagramFromYaos(yaoBools), changedYaos }
 }
 
-function getGongAndShiYing(upperId: number, lowerId: number): { gongId: number; shi: number; ying: number } {
+function getGongAndShiYing(upperId: number, lowerId: number): { gongId: number; shi: number; ying: number; world: string } {
   const yaos = [
     ...trigramIdToYaos(lowerId),
     ...trigramIdToYaos(upperId)
@@ -196,39 +196,39 @@ function getGongAndShiYing(upperId: number, lowerId: number): { gongId: number; 
   
   for (let gong = 1; gong <= 8; gong++) {
     const base = [...trigramIdToYaos(gong), ...trigramIdToYaos(gong)]
-    
-    if (yaos.every((y, i) => y === base[i])) return { gongId: gong, shi: 5, ying: 2 }
-    
+
+    if (yaos.every((y, i) => y === base[i])) return { gongId: gong, shi: 5, ying: 2, world: '本宫' }
+
     let c = [...base]; c[0] = !c[0]
-    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 0, ying: 3 }
-    
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 0, ying: 3, world: '一世' }
+
     c = [...base]; c[0] = !c[0]; c[1] = !c[1]
-    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 1, ying: 4 }
-    
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 1, ying: 4, world: '二世' }
+
     c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]
-    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 2, ying: 5 }
-    
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 2, ying: 5, world: '三世' }
+
     c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]
-    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 3, ying: 0 }
-    
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 3, ying: 0, world: '四世' }
+
     c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[3] = !c[3]; c[4] = !c[4]
-    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 4, ying: 1 }
-    
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 4, ying: 1, world: '五世' }
+
     // 游魂卦：初、二、三、五爻变（相对本宫），世四应初
     c = [...base]; c[0] = !c[0]; c[1] = !c[1]; c[2] = !c[2]; c[4] = !c[4]
-    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 3, ying: 0 }
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 3, ying: 0, world: '游魂' }
 
     // 归魂卦：仅五爻变（相对本宫），世三应六
     c = [...base]; c[4] = !c[4]
-    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 2, ying: 5 }
+    if (yaos.every((y, i) => y === c[i])) return { gongId: gong, shi: 2, ying: 5, world: '归魂' }
   }
 
-  return { gongId: upperId, shi: 2, ying: 5 }
+  return { gongId: upperId, shi: 2, ying: 5, world: '本宫' }
 }
 
-function calculateNajia(hexagram: Hexagram, dayGan: number): { najia: NajiaItem[]; gongId: number; gongElement: string } {
+function calculateNajia(hexagram: Hexagram, dayGan: number): { najia: NajiaItem[]; gongId: number; gongElement: string; shi: number; world: string } {
   const najia: NajiaItem[] = []
-  const { gongId, shi, ying } = getGongAndShiYing(hexagram.upperTrigram.id, hexagram.lowerTrigram.id)
+  const { gongId, shi, ying, world } = getGongAndShiYing(hexagram.upperTrigram.id, hexagram.lowerTrigram.id)
   const gongElement = TRIGRAMS[gongId - 1].element
   const naJiaArr = najiaOf(hexagram)
 
@@ -247,7 +247,50 @@ function calculateNajia(hexagram: Hexagram, dayGan: number): { najia: NajiaItem[
     })
   }
 
-  return { najia, gongId, gongElement }
+  return { najia, gongId, gongElement, shi, world }
+}
+
+// 三合局（生旺墓三支）与三会局（四方本气三支）
+const SANHE: { zhi: string[]; name: string }[] = [
+  { zhi: ['申', '子', '辰'], name: '三合水局' },
+  { zhi: ['亥', '卯', '未'], name: '三合木局' },
+  { zhi: ['寅', '午', '戌'], name: '三合火局' },
+  { zhi: ['巳', '酉', '丑'], name: '三合金局' },
+]
+const SANHUI: { zhi: string[]; name: string }[] = [
+  { zhi: ['亥', '子', '丑'], name: '三会水局' },
+  { zhi: ['寅', '卯', '辰'], name: '三会木局' },
+  { zhi: ['巳', '午', '未'], name: '三会火局' },
+  { zhi: ['申', '酉', '戌'], name: '三会金局' },
+]
+
+// 检出卦中三合／三会局：三支俱全且有动爻参与方以「成局」论（依《增删卜易·三合章》）
+function detectHeju(najia: NajiaItem[], originalYao: Yao[]): string[] {
+  const zhiPos = new Map<string, number[]>()
+  najia.forEach((n, i) => {
+    const z = zhiOf(n.naJia)
+    if (!zhiPos.has(z)) zhiPos.set(z, [])
+    zhiPos.get(z)!.push(i)
+  })
+  const result: string[] = []
+  for (const group of [...SANHE, ...SANHUI]) {
+    // 三支俱全且有动爻发动方以成局论（依《增删卜易·三合章》，静而不动者不取）
+    if (group.zhi.every(z => zhiPos.has(z)) &&
+        group.zhi.some(z => zhiPos.get(z)!.some(i => originalYao[i]?.changing))) {
+      result.push(group.name)
+    }
+  }
+  return result
+}
+
+// 月卦身：阳世从子起、阴世从午起，自初爻数至世爻（《卜筮正宗》安身诀）
+function calcGuaShen(najia: NajiaItem[], originalYao: Yao[], shi: number): { zhi: string; positions: number[] } {
+  const shiYin = originalYao[shi]?.yin
+  const startZhi = shiYin ? '午' : '子'
+  const startIdx = DI_ZHI_ORDER.indexOf(startZhi)
+  const shenZhi = DI_ZHI_ORDER[(startIdx + shi) % 12]
+  const positions = najia.map((n, i) => (zhiOf(n.naJia) === shenZhi ? i : -1)).filter(i => i >= 0)
+  return { zhi: shenZhi, positions }
 }
 
 const LIUQIN_ALL = ['父母', '兄弟', '子孙', '妻财', '官鬼']
@@ -384,7 +427,7 @@ export function createDivination(
   const selected = new Date(`${date}T${hh}:00:00`)
   const ganZhiDate = isNaN(selected.getTime()) ? new Date() : selected
   const { dayGanZhi, dayGan, monthJian, xunKong } = getGanZhiInfo(ganZhiDate)
-  const { najia, gongId, gongElement } = calculateNajia(original, dayGan)
+  const { najia, gongId, gongElement, shi, world } = calculateNajia(original, dayGan)
   const changedNajia = changed ? calculateChangedNajia(changed, gongElement) : null
   const fushen = calculateFushen(gongId, najia)
 
@@ -398,6 +441,13 @@ export function createDivination(
   const originalRelation = hexagramRelation(najia.map(n => n.naJia))
   const changedRelation = changed && changedNajia ? hexagramRelation(changedNajia.map(n => n.naJia)) : null
   const yinTags = hexagramYinTags(najia, changedNajia, originalYao)
+
+  // 卦宫世级、三合三会局、月卦身、合处逢冲/冲中逢合
+  const gongName = `${TRIGRAMS[gongId - 1].name}宫`
+  const heju = detectHeju(najia, originalYao)
+  const guaShen = calcGuaShen(najia, originalYao, shi)
+  const chongHe = originalRelation === '六合' && changedRelation === '六冲' ? '合处逢冲'
+    : originalRelation === '六冲' && changedRelation === '六合' ? '冲中逢合' : ''
 
   return {
     id: crypto.randomUUID(),
@@ -414,6 +464,11 @@ export function createDivination(
     originalRelation,
     changedRelation,
     yinTags,
+    gongName,
+    world,
+    heju,
+    guaShen,
+    chongHe,
     dayGanZhi,
     monthJian,
     xunKong,

@@ -71,6 +71,11 @@ export interface Divination {
   originalRelation?: '六冲' | '六合' | null  // 本卦卦体
   changedRelation?: '六冲' | '六合' | null   // 变卦卦体
   yinTags?: string[]                          // 卦反吟/伏吟（内卦/外卦）
+  gongName?: string                           // 卦宫，如「坎宫」
+  world?: string                              // 世级：本宫/一世…游魂/归魂
+  heju?: string[]                             // 三合局/三会局
+  guaShen?: { zhi: string; positions: number[] }  // 月卦身
+  chongHe?: string                            // 合处逢冲/冲中逢合
   dayGanZhi: string
   monthJian: string
   xunKong: string
