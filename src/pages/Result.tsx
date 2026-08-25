@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, RefreshCw, Settings } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, RefreshCw, Settings, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -104,6 +104,13 @@ export default function Result() {
   const aiConfig = useSettingsStore((state) => state.aiConfig)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const aiReady = isAiConfigured(aiConfig)
+  const abortRef = useRef<AbortController | null>(null)
+
+  // 离开本页即中止未完的请求，免得流在后台空转、回来时又把 token 续到新卦上
+  useEffect(() => () => {
+    abortRef.current?.abort()
+    abortRef.current = null
+  }, [])
 
   if (!result) {
     return (
@@ -165,6 +172,9 @@ export default function Result() {
       setSettingsOpen(true)
       return
     }
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
     setAiInterpretation('')
     setAiLoading(true)
     await aiDivination(result, question, aiConfig, {
@@ -174,7 +184,13 @@ export default function Result() {
         setAiInterpretation(`解卦出错：${err}，请稍后重试`)
         setAiLoading(false)
       }
-    })
+    }, controller.signal)
+  }
+
+  const handleStopAi = () => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    setAiLoading(false)
   }
 
   return (
@@ -231,7 +247,8 @@ export default function Result() {
             </div>
           </div>
           <div className="mt-2 md:mt-4 text-center text-xs md:text-sm text-ink-light/70">
-            {date} | {methodName}
+            {/* date 字段含日辰月建旬空，此处只取公历日期，免与上方四格重复 */}
+            {date.split(' ')[0]} | {methodName}
           </div>
         </div>
 
@@ -523,7 +540,7 @@ export default function Result() {
                 </>
               )}
             </div>
-          ) : aiLoading ? (
+          ) : !aiInterpretation ? (
             <div className="text-center py-10 md:py-12">
               <div className="relative w-16 h-16 mx-auto mb-5">
                 <div className="absolute inset-0 text-5xl opacity-20 animate-pulse">☯</div>
@@ -533,6 +550,13 @@ export default function Result() {
               </div>
               <p className="text-ink-light text-lg">大师凝神静气，推演卦象中...</p>
               <p className="text-ink-light/60 text-sm mt-2">请稍候片刻</p>
+              <button
+                onClick={handleStopAi}
+                className="mt-5 inline-flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm text-ink-light"
+              >
+                <Square size={14} />
+                停止
+              </button>
             </div>
           ) : (
             <div>
@@ -546,23 +570,38 @@ export default function Result() {
                   <ReactMarkdown remarkPlugins={[remarkGfm, remarkCjkFriendly]} components={mdComponents}>
                     {aiInterpretation}
                   </ReactMarkdown>
+                  {aiLoading && (
+                    <span className="inline-block align-baseline w-2 h-4 md:h-5 ml-0.5 bg-cinnabar/70 animate-pulse" aria-hidden="true" />
+                  )}
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-4">
-                <button
-                  onClick={() => setSettingsOpen(true)}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
-                >
-                  <Settings size={16} />
-                  接口设置
-                </button>
-                <button
-                  onClick={handleAiDivination}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
-                >
-                  <RefreshCw size={16} />
-                  重新解读
-                </button>
+                {aiLoading ? (
+                  <button
+                    onClick={handleStopAi}
+                    className="flex items-center gap-2 px-5 py-2 rounded-lg border border-cinnabar/40 text-cinnabar hover:bg-cinnabar/5 transition-colors text-sm"
+                  >
+                    <Square size={16} />
+                    停止解读
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setSettingsOpen(true)}
+                      className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
+                    >
+                      <Settings size={16} />
+                      接口设置
+                    </button>
+                    <button
+                      onClick={handleAiDivination}
+                      className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
+                    >
+                      <RefreshCw size={16} />
+                      重新解读
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           )}

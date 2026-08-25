@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { History, RotateCcw, Sparkles, Clock, Settings } from 'lucide-react'
 import { useDivinationStore } from '../store/useDivinationStore'
-import { createDivination, timeDivination, tossCoins } from '../utils/divination'
+import { createDivination, readCoins, timeDivination, tossCoins } from '../utils/divination'
 import Coin from '../components/Coin'
 import YaoLine from '../components/YaoLine'
 import HistoryDrawer from '../components/HistoryDrawer'
@@ -38,10 +38,11 @@ export default function Home() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [coinResults, setCoinResults] = useState<boolean[] | null>(null)
+  const tossTimers = useRef<ReturnType<typeof setTimeout>[]>([])
   const {
     yaos, question, date, hour, method, currentStep, isFlipping,
     setQuestion, setDate, setHour, setMethod, addYao, setYao, setIsFlipping,
-    setResult, reset
+    setResult, reset, resetYaos
   } = useDivinationStore()
 
   useEffect(() => {
@@ -50,19 +51,24 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // 抛掷动画的定时器若随页面卸载而留存，回来时会凭空补上一爻
+  useEffect(() => () => {
+    tossTimers.current.forEach(clearTimeout)
+    tossTimers.current = []
+  }, [])
+
   useEffect(() => {
-    if (method !== 'coins' || isFlipping) return
-    if (currentStep >= 6) {
-      setTimeout(() => {
-        const state = useDivinationStore.getState()
-        const completeYaos = state.yaos.filter((y): y is NonNullable<typeof y> => y !== null)
-        if (completeYaos.length === 6) {
-          const result = createDivination(completeYaos, state.question, state.date, state.method)
-          state.setResult(result)
-          navigate('/result')
-        }
-      }, 500)
-    }
+    if (method !== 'coins' || isFlipping || currentStep < 6) return
+    const timer = setTimeout(() => {
+      const state = useDivinationStore.getState()
+      const completeYaos = state.yaos.filter((y): y is NonNullable<typeof y> => y !== null)
+      if (completeYaos.length === 6) {
+        const result = createDivination(completeYaos, state.question, state.date, state.method)
+        state.setResult(result)
+        navigate('/result')
+      }
+    }, 500)
+    return () => clearTimeout(timer)
   }, [currentStep, isFlipping, method, navigate])
 
   const handleMethodChange = (m: 'coins' | 'manual' | 'time') => {
@@ -76,14 +82,12 @@ export default function Home() {
     setIsFlipping(true)
     setCoinResults(null)
 
-    setTimeout(() => {
+    tossTimers.current.push(setTimeout(() => {
       const { coins, yin, changing } = tossCoins()
       setCoinResults(coins)
       addYao(yin, changing)
-      setTimeout(() => {
-        setIsFlipping(false)
-      }, 500)
-    }, 900)
+      tossTimers.current.push(setTimeout(() => setIsFlipping(false), 500))
+    }, 900))
   }
 
   const handleManualYao = (index: number, yin: boolean, changing: boolean) => {
@@ -92,6 +96,7 @@ export default function Home() {
 
   const handleTimeDivination = () => {
     const timeYaos = timeDivination(date, hour)
+    if (!timeYaos) return
     const result = createDivination(timeYaos, question, date, 'time', hour)
     setResult(result)
     navigate('/result')
@@ -107,13 +112,15 @@ export default function Home() {
   }
 
   const handleReset = () => {
-    reset()
+    resetYaos()
     setCoinResults(null)
   }
 
   const previewYaos = yaos.slice().reverse()
   const manualSelectedCount = yaos.filter(Boolean).length
   const manualComplete = manualSelectedCount === 6
+  // 月建、日辰、旬空俱由所选之日推算，日期缺失便无从排盘，故先行拦下
+  const dateValid = /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(new Date(`${date}T12:00:00`).getTime())
 
   return (
     <div className="min-h-screen py-4 md:py-8 px-3 md:px-4 relative">
@@ -158,14 +165,16 @@ export default function Home() {
 
       <main className="max-w-4xl mx-auto relative z-10">
         <div className="paper-card p-4 md:p-8 mb-4 md:mb-6 animate-fade-in">
-          <div className="flex flex-wrap gap-1 md:gap-2 mb-4 md:mb-8 border-b border-paper-dark pb-4 md:pb-6 justify-center">
+          <div role="tablist" aria-label="起卦方式" className="flex flex-wrap gap-1 md:gap-2 mb-4 md:mb-8 border-b border-paper-dark pb-4 md:pb-6 justify-center">
             {(['coins', 'manual', 'time'] as const).map((m) => (
               <button
                 key={m}
+                role="tab"
+                aria-selected={method === m}
                 onClick={() => handleMethodChange(m)}
                 className={`pb-2 md:pb-3 px-4 md:px-6 text-base md:text-lg transition-all flex items-center gap-2 rounded-t-lg ${
-                  method === m 
-                    ? 'tab-active text-cinnabar bg-cinnabar/5' 
+                  method === m
+                    ? 'tab-active text-cinnabar bg-cinnabar/5'
                     : 'text-ink-light hover:text-ink hover:bg-paper-dark/50'
                 }`}
               >
@@ -177,8 +186,9 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-4 md:gap-6 mb-0 md:mb-6">
             <div>
-              <label className="block text-sm text-ink-light mb-2 tracking-wide">◆ 占问事项</label>
+              <label htmlFor="divination-question" className="block text-sm text-ink-light mb-2 tracking-wide">◆ 占问事项</label>
               <input
+                id="divination-question"
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
@@ -187,13 +197,18 @@ export default function Home() {
               />
             </div>
             <div>
-              <label className="block text-sm text-ink-light mb-2 tracking-wide">◆ 占问时间</label>
+              <label htmlFor="divination-date" className="block text-sm text-ink-light mb-2 tracking-wide">◆ 占问时间</label>
               <input
+                id="divination-date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-2.5 md:py-3 border border-paper-dark rounded-lg bg-paper/50 focus:outline-none focus:border-cinnabar focus:ring-2 focus:ring-cinnabar/20 transition-all text-base md:text-lg"
+                aria-invalid={!dateValid}
+                className={`w-full px-4 py-2.5 md:py-3 border rounded-lg bg-paper/50 focus:outline-none focus:ring-2 focus:ring-cinnabar/20 transition-all text-base md:text-lg ${dateValid ? 'border-paper-dark focus:border-cinnabar' : 'border-cinnabar'}`}
               />
+              {!dateValid && (
+                <p className="mt-1.5 text-xs text-cinnabar">请选择占问日期，月建、日辰、旬空皆由此推定</p>
+              )}
             </div>
           </div>
         </div>
@@ -220,18 +235,18 @@ export default function Home() {
             </div>
 
             {coinResults && !isFlipping && currentStep < 6 && (
-              <p className="text-center text-ink-light mb-4 md:mb-6 animate-fade-in text-sm md:text-base">
-                {coinResults.filter(c => c).length === 3 && '三正为老阴 × 动爻'}
-                {coinResults.filter(c => c).length === 0 && '三反为老阳 ○ 动爻'}
-                {coinResults.filter(c => c).length === 2 && '两正一反为少阴 - -'}
-                {coinResults.filter(c => c).length === 1 && '两反一正为少阳 —'}
+              <p className="text-center text-ink-light mb-2 animate-fade-in text-sm md:text-base">
+                {readCoins(coinResults).caption}
               </p>
             )}
+            <p className="text-center text-ink-light/50 text-[10px] md:text-xs mb-4 md:mb-6">
+              背为阳记三、字为阴记二：六老阴、七少阳、八少阴、九老阳
+            </p>
 
             <div className="flex justify-center gap-3 md:gap-4 flex-wrap">
               <button
                 onClick={handleToss}
-                disabled={isFlipping || currentStep >= 6}
+                disabled={isFlipping || currentStep >= 6 || !dateValid}
                 className="seal-button-primary px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl"
               >
                 {isFlipping ? '✨ 抛掷中...' : currentStep < 6 ? '抛掷铜钱' : '排盘中...'}
@@ -280,6 +295,8 @@ export default function Home() {
                         <button
                           key={opt.label}
                           onClick={() => handleManualYao(i, opt.yin, opt.changing)}
+                          aria-pressed={selected}
+                          aria-label={`${YAO_LABELS[i]}爻 ${opt.label}`}
                           className={`px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg border transition-all text-sm md:text-base ${
                             selected 
                               ? 'bg-cinnabar text-paper border-cinnabar shadow-md' 
@@ -303,7 +320,7 @@ export default function Home() {
               <div className="flex justify-center gap-3 md:gap-4 flex-wrap">
                 <button
                   onClick={generateResult}
-                  disabled={!manualComplete}
+                  disabled={!manualComplete || !dateValid}
                   className="seal-button-primary px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl"
                 >
                   ✨ 开始排盘
@@ -351,6 +368,7 @@ export default function Home() {
                       <button
                         key={sc.name}
                         onClick={() => setHour(sc.hour)}
+                        aria-pressed={selected}
                         className={`px-1 py-1.5 md:py-2 rounded-lg border transition-all text-xs md:text-sm ${
                           selected
                             ? 'bg-cinnabar text-paper border-cinnabar shadow-md'
@@ -369,6 +387,7 @@ export default function Home() {
               <div className="flex justify-center gap-4">
                 <button
                   onClick={handleTimeDivination}
+                  disabled={!dateValid}
                   className="seal-button-primary px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl"
                 >
                   ✨ 天机起卦

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { X, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDivinationStore } from '../store/useDivinationStore'
@@ -24,13 +25,28 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
     navigate('/')
   }
 
+  // 以 dialog 自任，则须应 Esc 而退，方合无障碍之常规
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   return (
     <>
       <div 
         className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
-      <div className={`fixed top-0 right-0 h-full w-[85vw] max-w-xs md:w-80 bg-paper shadow-2xl z-50 transform transition-transform duration-300 border-l border-paper-dark ${open ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* visibility 一并纳入过渡：滑出动画照旧，收起后才真正隐藏，键盘 Tab 不会再落进抽屉 */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="历史记录"
+        aria-hidden={!open}
+        className={`fixed top-0 right-0 h-full w-[85vw] max-w-xs md:w-80 bg-paper shadow-2xl z-50 transform transition-[transform,visibility] duration-300 border-l border-paper-dark ${open ? 'translate-x-0 visible' : 'translate-x-full invisible'}`}
+      >
         <div className="p-3 md:p-4 border-b border-paper-dark flex items-center justify-between">
           <h2 className="text-lg md:text-xl text-ink">历史记录</h2>
           <button onClick={onClose} className="p-2 hover:bg-paper-dark rounded-full transition-colors" title="关闭" aria-label="关闭历史记录">
@@ -45,7 +61,11 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
               {history.map((d) => (
                 <div key={d.id} className="paper-card p-3 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start">
-                    <div className="flex-1 cursor-pointer" onClick={() => handleLoad(d)}>
+                    <button
+                      type="button"
+                      onClick={() => handleLoad(d)}
+                      className="flex-1 min-w-0 text-left rounded focus:outline-none focus:ring-2 focus:ring-cinnabar/40"
+                    >
                       <div className="font-medium text-cinnabar text-sm md:text-base">{d.original.name}</div>
                       {d.changed && (
                         <div className="text-xs md:text-sm text-ink-light mt-1">
@@ -54,7 +74,7 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
                       )}
                       <div className="text-xs md:text-sm text-ink-light mt-1 truncate">{d.question || '（未填事项）'}</div>
                       <div className="text-[10px] md:text-xs text-ink-light/70 mt-1">{new Date(d.created).toLocaleString('zh-CN')}</div>
-                    </div>
+                    </button>
                     <button 
                       onClick={() => deleteHistory(d.id)}
                       className="p-1 text-ink-light hover:text-cinnabar transition-colors"

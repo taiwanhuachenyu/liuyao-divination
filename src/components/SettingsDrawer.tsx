@@ -36,6 +36,14 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     setTest({ status: 'idle', message: '' })
   }, [open])
 
+  // 以 dialog 自任，则须应 Esc 而退，方合无障碍之常规
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+
   const endpoint = resolveEndpoint(draft.baseUrl)
   const complete = isAiConfigured(draft)
 
@@ -74,8 +82,13 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
         className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
+      {/* visibility 一并纳入过渡：滑出动画照旧，收起后才真正隐藏，键盘 Tab 不会再落进抽屉 */}
       <div
-        className={`fixed top-0 right-0 h-full w-[92vw] max-w-md bg-paper shadow-2xl z-50 flex flex-col transform transition-transform duration-300 border-l border-paper-dark ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="AI 解卦设置"
+        aria-hidden={!open}
+        className={`fixed top-0 right-0 h-full w-[92vw] max-w-md bg-paper shadow-2xl z-50 flex flex-col transform transition-[transform,visibility] duration-300 border-l border-paper-dark ${open ? 'translate-x-0 visible' : 'translate-x-full invisible'}`}
       >
         <div className="p-3 md:p-4 border-b border-paper-dark flex items-center justify-between shrink-0">
           <h2 className="text-lg md:text-xl text-ink">AI 解卦设置</h2>

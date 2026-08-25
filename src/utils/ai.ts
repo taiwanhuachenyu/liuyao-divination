@@ -260,13 +260,14 @@ export async function aiDivination(
   divination: Divination,
   question: string,
   config: AiConfig,
-  callbacks: StreamCallbacks
+  callbacks: StreamCallbacks,
+  signal?: AbortSignal
 ): Promise<void> {
   if (!isAiConfigured(config)) {
     callbacks.onError('尚未配置 AI 接口，请先在设置中填写接口地址、密钥与模型名')
     return
   }
-  await streamCompletion(config, buildPrompt(divination, question), callbacks)
+  await streamCompletion(config, buildPrompt(divination, question), callbacks, signal)
 }
 
 // 连通性测试走与正式解卦完全相同的请求路径，收到首个 token 即中断，避免白白生成整篇解读

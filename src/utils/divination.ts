@@ -80,13 +80,32 @@ function genId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
 }
 
-export function tossCoins(): { coins: boolean[]; yin: boolean; changing: boolean } {
+// 摇卦记数：背面为阳记三、正面（字）为阴记二，三钱之和定爻。
+// 六为老阴（阴动）、七为少阳（阳静）、八为少阴（阴静）、九为老阳（阳动）——
+// 阴阳系于和之奇偶而不在背面多寡，故一背（七）反为阳、两背（八）反为阴
+export interface CoinYao {
+  yin: boolean
+  changing: boolean
+  name: string    // 老阴/少阳/少阴/老阳
+  caption: string // 界面直接取用，与判定同出一源，免得两处各说一套
+}
+
+const COIN_SUM_YAO: Record<number, CoinYao> = {
+  6: { yin: true, changing: true, name: '老阴', caption: '三字为老阴 × 动爻' },
+  7: { yin: false, changing: false, name: '少阳', caption: '一背两字为少阳 —' },
+  8: { yin: true, changing: false, name: '少阴', caption: '两背一字为少阴 - -' },
+  9: { yin: false, changing: true, name: '老阳', caption: '三背为老阳 ○ 动爻' },
+}
+
+// coins[i] 为 true 表示该钱「字」面向上（阴面记二），false 为「背」面向上（阳面记三）
+export function readCoins(coins: boolean[]): CoinYao {
+  const backs = coins.filter(c => !c).length
+  return COIN_SUM_YAO[backs + 6]
+}
+
+export function tossCoins(): { coins: boolean[] } & CoinYao {
   const coins = [Math.random() > 0.5, Math.random() > 0.5, Math.random() > 0.5]
-  const heads = coins.filter(c => c).length
-  if (heads === 0) return { coins, yin: false, changing: true }
-  if (heads === 3) return { coins, yin: true, changing: true }
-  if (heads === 1) return { coins, yin: false, changing: false }
-  return { coins, yin: true, changing: false }
+  return { coins, ...readCoins(coins) }
 }
 
 function getHourZhi(hour: number): number {
@@ -133,21 +152,28 @@ function trigramIdToYaos(id: number): boolean[] {
   return TRIGRAM_YAO_MAP[id] || [false, false, false]
 }
 
-export function timeDivination(dateStr: string, hour?: number): Yao[] {
-  const now = new Date()
-  const date = new Date(dateStr + 'T' + String(hour ?? now.getHours()).padStart(2, '0') + ':00:00')
-  const year = date.getFullYear()
-  const month = date.getMonth() + 1
-  const day = date.getDate()
-  const h = hour ?? date.getHours()
+// 梅花易数年月日时起卦。《梅花易数》「子年一数」「正月一数」「初一一数」皆指农历，
+// 故年取农历年地支序（子一至亥十二）、月日取农历月日，闰月以其本月之数论。
+// 日期无效时返回 null，交由调用方处理，不臆造卦象
+export function timeDivination(dateStr: string, hour?: number): Yao[] | null {
+  const h = hour ?? new Date().getHours()
+  const date = new Date(`${dateStr}T${String(h).padStart(2, '0')}:00:00`)
+  if (isNaN(date.getTime())) return null
+
+  const lunar = Solar.fromYmdHms(
+    date.getFullYear(), date.getMonth() + 1, date.getDate(), h, 0, 0
+  ).getLunar()
+
+  const yearNum = DI_ZHI_ORDER.indexOf(lunar.getYearZhi()) + 1
+  const monthNum = Math.abs(lunar.getMonth())
+  const dayNum = lunar.getDay()
   const hourZhi = getHourZhi(h) + 1
 
-  const yearNum = ((year - 4) % 12) + 1
-  const sum = yearNum + month + day
+  const sum = yearNum + monthNum + dayNum
   const upperNum = sum % 8
   const lowerNum = (sum + hourZhi) % 8
   const changingYao = (sum + hourZhi) % 6
-  
+
   const upperTrigramId = upperNum === 0 ? 8 : upperNum
   const lowerTrigramId = lowerNum === 0 ? 8 : lowerNum
   const changingIdx = changingYao === 0 ? 5 : changingYao - 1
@@ -407,7 +433,7 @@ export function getHexagramInterpretation(hexagram: Hexagram, changed: Hexagram 
   if (changingYaos.length === 1) {
     const yaoIdx = changingYaos[0]
     const label = YAO_POSITION_LABELS[yaoIdx] ?? String(yaoIdx + 1)
-    interpretations.push(`【动爻独发】${label}爻独动为用神，主断在此，当以其爻辞为凭：${hexagram.lines[yaoIdx].text}`)
+    interpretations.push(`【动爻独发】${label}爻独发，主断在此，当以其爻辞为凭：${hexagram.lines[yaoIdx].text}`)
   } else if (changingYaos.length > 1) {
     interpretations.push(`【多爻发动】共有${changingYaos.length}爻发动，事情复杂多变，宜以本卦卦义为主、变卦为辅，参酌动爻综合判断。`)
   } else {
