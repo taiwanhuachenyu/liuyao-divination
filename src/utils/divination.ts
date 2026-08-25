@@ -444,7 +444,7 @@ export function getHexagramInterpretation(hexagram: Hexagram, changed: Hexagram 
     const label = YAO_POSITION_LABELS[yaoIdx] ?? String(yaoIdx + 1)
     interpretations.push(`【动爻独发】${label}爻独发，主断在此，当以其爻辞为凭：${hexagram.lines[yaoIdx].text}`)
   } else if (changingYaos.length > 1) {
-    interpretations.push(`【多爻发动】共有${changingYaos.length}爻发动，事情复杂多变，宜以本卦卦义为主、变卦为辅，参酌动爻综合判断。`)
+    interpretations.push(`【多爻发动】共有${['零','一','二','三','四','五','六'][changingYaos.length] ?? changingYaos.length}爻发动，事情复杂多变，宜以本卦卦义为主、变卦为辅，参酌动爻综合判断。`)
   } else {
     interpretations.push(`【六爻安静】卦无动爻，事态相对稳定，宜以本卦卦义与卦辞为主要参考，静守其常。`)
   }

@@ -3,189 +3,548 @@
 @tailwind utilities;
 
 @layer base {
+  /* 五役分工：墨为体、赭为变、朱为批、靛为历、绿为旺。
+     此外一切场合退回墨之三级，不得另立第七色 */
+  :root {
+    --mo: #1a1a1a;
+    --mo-light: #3d3d3d;
+    --mo-faint: #6b6459;
+    --zhu: #c23a30;
+    --zhu-deep: #9e2b22;
+    --zhe: #b5693a;
+    --zhe-deep: #8f4a24;
+    --dian: #2a5d7c;
+    --lu-deep: #2f6046;
+    --zi: #6e4a6b;
+    --paper: #f5f0e6;
+    /* 乌丝栏用淡墨，武边与层界用重墨 */
+    --rule: rgba(26, 26, 26, 0.3);
+    --rule-strong: rgba(26, 26, 26, 0.78);
+
+    --ti: TiLatin, 'Ma Shan Zheng', 'EB Garamond', 'STLiti', LiSu, serif;
+    --song: 'FangSong', 'STFangsong', 'Songti SC', SimSun, serif;
+    --num: 'EB Garamond', Georgia, 'Songti SC', SimSun, serif;
+  }
+
+  /* Ma Shan Zheng 自带一副潦草拉丁，题署里的「AI」「v1」落进去便斜歪如坏字。
+     此处以 local() 造一个只管拉丁区段的字族排在最前，零下载即把拉丁夺回宋体正体。
+     一个 local() 都命中不了时 @font-face 整条作废，自然落回其后的 Ma Shan Zheng，无碍 */
+  @font-face {
+    font-family: 'TiLatin';
+    src: local('FangSong'), local('STFangsong'), local('Songti SC'), local('Georgia');
+    unicode-range: U+0000-024F, U+2000-206F, U+2190-21FF;
+    font-style: normal;
+    font-weight: 400;
+  }
+
   body {
-    @apply bg-paper text-ink relative;
-    background-image: 
-      radial-gradient(ellipse at 20% 0%, rgba(181, 105, 58, 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 100%, rgba(42, 93, 124, 0.05) 0%, transparent 50%),
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    @apply bg-paper text-ink;
+    font-family: var(--song);
+    /* 竹帘纹：丝纹 4px 一道、帘纹 26px 一道。
+       原先那层 feTurbulence 噪点在 1x 屏上根本看不出，等于既没删也没在场 */
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(26, 26, 26, 0.03) 3px,
+        rgba(26, 26, 26, 0.03) 4px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 25px,
+        rgba(26, 26, 26, 0.05) 25px,
+        rgba(26, 26, 26, 0.05) 26px
+      );
     min-height: 100vh;
     overflow-x: hidden;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C23A30' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    z-index: 0;
+  /* 焦点环一律朱色实线方框，与刻本的朱批同源；链接改靛以别于按钮 */
+  :focus-visible {
+    outline: 2px solid var(--zhu);
+    outline-offset: 2px;
+  }
+
+  a:focus-visible {
+    outline-color: var(--dian);
   }
 }
 
 @layer components {
-  .paper-card {
-    @apply bg-paper/95 backdrop-blur-sm border border-paper-dark rounded-xl shadow-lg relative overflow-hidden;
-    background-image: 
-      linear-gradient(to bottom right, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.1) 100%);
+  /* ── 版框 ───────────────────────────────────────────
+     刻本的边界是文武双边：外一道粗（武边）、内一道细（文边），中间隔一线纸。
+     两道边以 inset box-shadow 叠出，省一层 DOM。直角是硬性，圆角即出戏 */
+  .ce-page {
+    @apply bg-paper relative;
+    border: 2.5px solid var(--mo);
+    box-shadow:
+      inset 0 0 0 4px var(--paper),
+      inset 0 0 0 5px var(--rule);
   }
 
-  .paper-card::before {
+  /* ── 节题：黑口一竖、鱼尾一枚、朱题二字 ──────────────
+     全站不用图标作节题，层级只由鱼尾之黑白与字号定 */
+  .ce-head {
+    @apply flex items-center gap-3 mb-4;
+  }
+
+  .yu-wei {
+    width: 14px;
+    height: 18px;
+    background: var(--mo);
+    clip-path: polygon(50% 100%, 0 30%, 0 0, 100% 0, 100% 30%);
+    flex-shrink: 0;
+  }
+
+  /* 线鱼尾（描边不填）作小节之题，与实鱼尾分大小 */
+  .yu-wei--xian {
+    background: var(--mo-light);
+    opacity: 0.45;
+  }
+
+  .ce-head__title {
+    font-family: var(--ti);
+    font-size: 20px;
+    line-height: 1.3;
+    letter-spacing: 0.3em;
+    color: var(--zhu);
+  }
+
+  /* ── 书耳：自版框左边凸出的名目牌，贴在框上而不占正文行 ── */
+  .ce-ear {
+    position: absolute;
+    left: -1px;
+    top: -1px;
+    height: 22px;
+    padding: 0 8px;
+    border: 1px solid var(--mo);
+    background: var(--paper);
+    font-family: var(--song);
+    font-size: 12px;
+    line-height: 20px;
+    letter-spacing: 0.1em;
+    color: var(--mo);
+    white-space: nowrap;
+  }
+
+  .ce-ear--bian {
+    border-color: var(--zhe-deep);
+    color: var(--zhe-deep);
+  }
+
+  /* ── 天头朱批：图例、提示、免责诸语，一律浮于版框之上 ── */
+  .tian-pi {
+    font-family: var(--song);
+    font-size: 12px;
+    line-height: 1.6;
+    letter-spacing: 0.1em;
+    color: var(--zhu-deep);
+    border-left: 2px solid var(--zhu);
+    padding-left: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* ── 题字闸门：书法体只许 20px 以上用，小字必落宋体 ── */
+  .ti-zi {
+    font-family: var(--ti);
+    line-height: 1.1;
+    letter-spacing: 0.15em;
+    color: var(--mo);
+  }
+
+  /* ── 乌丝栏排盘表 ─────────────────────────────────
+     八列由贯通六爻的界行分开，界行取代列距。
+     每格以 ::before 画右侧竖线并上下各溢出 6px，六行的线段首尾相接便成贯通一线 */
+  .pan-row {
+    @apply flex items-stretch justify-center;
+    gap: 2px;
+    padding: 3px 0;
+  }
+
+  .pan-cell {
+    @apply relative flex items-center justify-center;
+  }
+
+  .pan-cell::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(194, 58, 48, 0.3), transparent);
+    right: -1px;
+    top: -6px;
+    bottom: -6px;
+    width: 1px;
+    background: var(--rule);
   }
 
-  .scroll-paper {
-    @apply relative;
+  /* 三处层界加重：六神｜六亲、动｜变、变纳甲｜爻题 */
+  .pan-cell--layer::before {
+    background: var(--rule-strong);
   }
 
-  .scroll-paper::before,
-  .scroll-paper::after {
+  .pan-cell:last-child::before {
+    display: none;
+  }
+
+  .pan-grid__header {
+    @apply flex items-stretch justify-center pb-2 mb-1;
+    gap: 2px;
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  .pan-grid__foot {
+    border-top: 1px solid var(--rule-strong);
+  }
+
+  @media (min-width: 768px) {
+    .pan-row,
+    .pan-grid__header {
+      gap: 3px;
+    }
+
+    .pan-row {
+      padding: 5px 0;
+    }
+  }
+
+  /* ── 爻线三态：本卦墨、变者赭、不变者淡墨 ────────────
+     刻线不投影，故无 shadow；不变者原取 ink/30，实测对宣纸底仅 1.91:1，
+     不足非文本元素 3:1 之限，提到 /50 得 3.24:1 */
+  .yao-tiao {
+    height: 12px;
+    border-radius: 0;
+  }
+
+  @media (min-width: 768px) {
+    .yao-tiao {
+      height: 16px;
+    }
+  }
+
+  .yao-ink {
+    background: var(--mo);
+  }
+
+  .yao-bian {
+    background: var(--zhe);
+  }
+
+  .yao-jing {
+    background: rgba(26, 26, 26, 0.5);
+  }
+
+  /* ── 朱笔圈点：动爻之 ○／× 与世爻之朱框 ──────────
+     批注不呼吸，故去 pulse 动画 */
+  .zhu-quan {
+    @apply flex items-center justify-center font-bold;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--zhu);
+    border-radius: 9999px;
+    background: var(--paper);
+    color: var(--zhu);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 768px) {
+    .zhu-quan {
+      width: 20px;
+      height: 20px;
+      font-size: 14px;
+    }
+  }
+
+  .shi-kuang {
+    display: inline-block;
+    border: 1px solid var(--zhu);
+    padding: 0 3px;
+    line-height: 1.25;
+    color: var(--zhu);
+    font-weight: bold;
+  }
+
+  /* ── 六神色引 ─────────────────────────────────────
+     六神之名本身即含色，再整字染一遍是同一信息说两次。
+     降为字左 2px 竖色条，字身一律墨二级：典得其位而声不越层。
+     白虎属金，金白无色可施，故作虚线中空 */
+  .se-yin {
+    @apply inline-flex items-center gap-1;
+    color: var(--mo-light);
+  }
+
+  .se-yin::before {
     content: '';
-    position: absolute;
-    left: -8px;
-    right: -8px;
-    height: 16px;
-    background: linear-gradient(to bottom, #B5693A, #8B4513);
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    flex-shrink: 0;
   }
 
-  .scroll-paper::before {
-    top: -8px;
+  .se-yin[data-shen='青龙']::before { background: var(--lu-deep); }
+  .se-yin[data-shen='朱雀']::before { background: var(--zhu); }
+  .se-yin[data-shen='勾陈']::before { background: var(--zhe); }
+  .se-yin[data-shen='螣蛇']::before { background: var(--zi); }
+  .se-yin[data-shen='玄武']::before { background: var(--dian); }
+  .se-yin[data-shen='白虎']::before {
+    border: 1px dashed var(--mo-light);
+    background: none;
   }
 
-  .scroll-paper::after {
-    bottom: -8px;
+  /* ── 中空：白即无。旬空以虚线中空表之，不为它另立一色 ── */
+  .kong {
+    @apply inline-block;
+    border: 1px dashed var(--mo-light);
+    padding: 0 3px;
+    color: var(--mo-light);
   }
 
-  .seal-button {
-    @apply px-6 py-2.5 rounded-lg border-2 border-cinnabar text-cinnabar font-medium 
-           transition-all duration-300 hover:bg-cinnabar hover:text-paper hover:shadow-lg
-           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden;
+  /* ── 空版待刻：未摇卦、未配接口、无历史，三处「无」皆作一枚空版。
+     刻本未刻处留空版，不列虚爻 —— 首屏因此不必以六根空灰条充数 ── */
+  .kong-ban {
+    @apply ce-page flex items-center justify-center text-center;
+    min-height: 96px;
+    padding: 16px;
+    font-family: var(--song);
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: var(--zhu-deep);
+    border-style: dashed;
+    border-width: 1px;
+    box-shadow: none;
   }
 
-  .seal-button::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: rgba(255,255,255,0.2);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: width 0.4s, height 0.4s;
+  @media (min-width: 768px) {
+    .kong-ban {
+      min-height: 120px;
+    }
   }
 
-  .seal-button:hover::after {
-    width: 200px;
-    height: 200px;
-  }
-
-  .seal-button-primary {
-    @apply px-6 py-3 rounded-lg bg-gradient-to-br from-cinnabar to-red-700 text-paper font-medium 
-           transition-all duration-300 hover:from-red-600 hover:to-red-800
-           active:scale-95 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-
-  .tab-active {
-    @apply text-cinnabar border-b-2 border-cinnabar relative;
-  }
-
-  .tab-active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
-    background: #C23A30;
-    border-radius: 50%;
-  }
-
-  .yao-line {
-    @apply transition-all duration-500 origin-center relative;
-  }
-
-  .changing-mark {
-    @apply absolute -right-8 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-cinnabar bg-paper text-cinnabar text-sm flex items-center justify-center font-bold shadow-sm;
-    animation: pulse-red 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse-red {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(194, 58, 48, 0.4); }
-    50% { box-shadow: 0 0 0 6px rgba(194, 58, 48, 0); }
-  }
-
-  .bagua-decoration {
-    @apply absolute text-ink/5 select-none pointer-events-none;
-  }
-
-  .glow-text {
-    text-shadow: 0 0 20px rgba(194, 58, 48, 0.3);
-  }
-
-  .yin-yang-spin {
-    animation: spin 60s linear infinite;
-  }
-
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  .float-animation {
-    animation: float 6s ease-in-out infinite;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-
-  .divider-ornament {
-    @apply flex items-center justify-center my-6;
-  }
-
-  .divider-ornament::before,
-  .divider-ornament::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(194, 58, 48, 0.3), transparent);
-  }
-
-  .trigram-symbol {
-    font-size: 2rem;
-    line-height: 1;
-  }
-
-  .judgment-text {
-    @apply leading-loose tracking-wide text-lg;
+  /* ── 卦辞正文：独占一叶正中，行距二〇五，宽二十六字 ──
+     七字之卦辞于是成一行居中题署，而非两百像素高的灰盒 */
+  .jing-wen {
+    font-family: var(--ti);
+    font-size: clamp(1.25rem, 4vw, 1.375rem);
+    line-height: 2.05;
+    letter-spacing: 0.06em;
     text-indent: 2em;
+    color: var(--mo);
+    max-width: 26em;
+    margin: 0 auto;
+  }
+
+  /* 朱色实心小圈作句读，替「，。」之标点 */
+  .ju {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 9999px;
+    background: var(--zhu);
+    margin: 0 0.3em;
+    vertical-align: middle;
+  }
+
+  /* ── 印章式按钮：朱文（填朱白字）与白文（描边朱字）二式 ──
+     原先的渐变、水波、缩放三件套一并撤去；毛口 mask 给朱印一点钤下的印痕 */
+  .seal-btn {
+    @apply inline-flex items-center justify-center gap-2 transition-colors;
+    font-family: var(--ti);
+    font-size: 18px;
+    letter-spacing: 0.3em;
+    text-indent: 0.3em;
+    padding: 10px 24px;
+    border: 1px solid var(--zhu-deep);
+    border-radius: 0;
+    color: var(--zhu-deep);
+    background: var(--paper);
+  }
+
+  .seal-btn:hover:not(:disabled) {
+    background: rgba(194, 58, 48, 0.06);
+  }
+
+  .seal-btn:disabled {
+    color: var(--mo-faint);
+    border-color: var(--rule);
+    cursor: not-allowed;
+  }
+
+  .seal-btn--yin {
+    background: var(--zhu);
+    border-color: var(--zhu);
+    color: var(--paper);
+    box-shadow: inset 0 0 0 1px var(--paper);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,2 L2,0 L98,1 L100,3 L99,97 L97,100 L3,99 L1,97 Z' fill='white'/%3E%3C/svg%3E");
+    -webkit-mask-size: 100% 100%;
+    mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,2 L2,0 L98,1 L100,3 L99,97 L97,100 L3,99 L1,97 Z' fill='white'/%3E%3C/svg%3E");
+    mask-size: 100% 100%;
+  }
+
+  .seal-btn--yin:hover:not(:disabled) {
+    background: var(--zhu-deep);
+    border-color: var(--zhu-deep);
+  }
+
+  .seal-btn--yin:disabled {
+    background: var(--mo-faint);
+    border-color: var(--mo-faint);
+    color: var(--paper);
+  }
+
+  /* ── 填写栏：只余一道下栏，聚焦则转朱。
+     SaaS 味由「灰底＋等宽＋圆角」三件套造成，三件同去，古意即续上 ── */
+  .field-lan {
+    @apply w-full bg-transparent transition-colors;
+    font-family: var(--song);
+    padding: 8px 4px;
+    border: 0;
+    border-bottom: 2px solid var(--rule);
+    border-radius: 0;
+    color: var(--mo);
+  }
+
+  .field-lan::placeholder {
+    color: var(--mo-faint);
+    letter-spacing: 0.1em;
+  }
+
+  .field-lan:focus {
+    outline: none;
+    border-bottom-color: var(--zhu);
+  }
+
+  .field-lan:focus-visible {
+    outline: none;
+    border-bottom-color: var(--zhu);
+  }
+
+  .field-ti {
+    @apply block mb-1;
+    font-family: var(--song);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    color: var(--mo-light);
+  }
+
+  /* ── 拉丁数字：列宽不跳。
+     font-size-adjust 只能落在此类上，若置于 :root 会连汉字一并缩放，
+     把全稿定死的 px 尺寸尽数作废 ── */
+  .num {
+    font-family: var(--num);
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: 0.02em;
+    font-style: normal;
+  }
+
+  /* 题署里的拉丁缩写（AI、v1）压成小铭记，免得在楷字间张牙舞爪 */
+  .la {
+    font-family: var(--song);
+    font-style: normal;
+    font-weight: 600;
+    font-size: 0.86em;
+    letter-spacing: 0.08em;
+    vertical-align: 0.04em;
+  }
+
+  /* ── 断语分段：段序以天干排甲乙丙丁，段间一道横线 ── */
+  .duan-list {
+    counter-reset: duan;
+  }
+
+  .duan-item {
+    counter-increment: duan;
+    @apply relative;
+    padding: 12px 0 12px 28px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .duan-item:first-child {
+    border-top: 0;
+  }
+
+  .duan-item::before {
+    content: counter(duan, cjk-heavenly-stem) '、';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    color: var(--zhu);
+    font-family: var(--song);
+    font-size: 14px;
+    line-height: 1.9;
   }
 }
 
 @layer utilities {
-  .text-shadow-sm {
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  }
-
-  .text-shadow-glow {
-    text-shadow: 0 0 10px rgba(194, 58, 48, 0.3);
-  }
-
-  .ink-border {
-    border-image: linear-gradient(135deg, #B5693A, #1A1A1A, #B5693A) 1;
+  /* 界内小字一律不加字距：楷书题字才加 */
+  .tracking-none {
+    letter-spacing: 0;
   }
 }
+
+/* 铜钱翻掷：三枚钱一齐在半空转，此处只管转，落定之相由 React 定 */
+@keyframes coinFlip {
+  0% {
+    transform: rotateY(0deg) translateY(0);
+  }
+  50% {
+    transform: rotateY(900deg) translateY(-28px);
+  }
+  100% {
+    transform: rotateY(1800deg) translateY(0);
+  }
+}
+
+/* 爻自下而上渐次显形。fill-mode 取 both：
+   若只取 forwards，元素在 animation-delay 那段仍是可见的，六爻便一齐先亮再逐个重演 */
+@keyframes yaoReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── 一叶纸上的东西本该能落回纸上 ──
+   打印时撤帘纹、朱批转墨，边框收细 */
+@media print {
+  body {
+    background: white;
+    background-image: none;
+  }
+
+  .ce-page {
+    border-width: 1.5px;
+    box-shadow:
+      inset 0 0 0 3px white,
+      inset 0 0 0 4px rgba(26, 26, 26, 0.5);
+  }
+
+  .tian-pi {
+    color: var(--mo);
+    border-left-color: var(--mo);
+  }
+
+  .zhu-quan,
+  .shi-kuang,
+  .ce-head__title,
+  .duan-item::before {
+    color: var(--mo);
+    border-color: var(--mo);
+  }
+
+  .ju {
+    background: var(--mo);
+  }
+
+  .seal-btn,
+  .no-print {
+    display: none;
+  }
+}
+
+
+
+

@@ -4,7 +4,7 @@ import Result from './pages/Result'
 
 function App() {
   return (
-    <div className="min-h-screen font-li">
+    <div className="min-h-screen">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/result" element={<Result />} />

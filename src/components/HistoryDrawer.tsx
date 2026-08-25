@@ -44,7 +44,7 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
       >
         <div className="p-3 md:p-4 border-b border-paper-dark flex items-center justify-between">
           <h2 className="text-lg md:text-xl text-ink">历史记录</h2>
-          <button onClick={onClose} className="p-2 hover:bg-paper-dark rounded-full transition-colors" title="关闭" aria-label="关闭历史记录">
+          <button onClick={onClose} className="p-2 hover:bg-paper-dark transition-colors" title="关闭" aria-label="关闭历史记录">
             <X size={20} />
           </button>
         </div>
@@ -54,7 +54,7 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
           ) : (
             <div className="space-y-2 md:space-y-3">
               {history.map((d) => (
-                <div key={d.id} className="paper-card p-3 hover:shadow-md transition-shadow">
+                <div key={d.id} className="ce-page p-3 hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start">
                     <button
                       type="button"
@@ -85,7 +85,7 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
           )}
         </div>
         <div className="p-3 md:p-4 border-t border-paper-dark">
-          <button onClick={handleNew} className="seal-button w-full">
+          <button onClick={handleNew} className="seal-btn w-full">
             重新起卦
           </button>
         </div>

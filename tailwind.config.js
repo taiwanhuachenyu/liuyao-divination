@@ -15,11 +15,22 @@ export default {
         jade: '#3E7C5A',
         'paper-dark': '#E8DFD0',
         'ink-light': '#3D3D3D',
+        // 墨之三级末位。对宣纸底 5.15:1，可作正文小字
+        'ink-faint': '#6B6459',
+        // 朱、赭、绿三色原值作大字尚可，落到 12–14px 小字皆不足 4.5:1，
+        // 故各备一深色专供小字与描边，浅者只用于色块
+        'cinnabar-deep': '#9E2B22',
+        'ocher-deep': '#8F4A24',
+        'jade-deep': '#2F6046',
+        // 螣蛇之紫。六神色引里唯一新增之色，只作 2px 竖条，不作字色
+        zi: '#6E4A6B',
       },
       fontFamily: {
-        // 末位不用 cursive：Windows 把它解作 Comic Sans MS，中文又落回默认字体，
-        // 反不如径直退到楷书，与 Ma Shan Zheng 的笔意也一路
-        li: ['"Ma Shan Zheng"', '"STLiti"', 'LiSu', '"FangSong"', 'KaiTi', '"STKaiti"', 'serif'],
+        // TiLatin 排最前：index.css 里以 local() + unicode-range 造的拉丁补丁，
+        // 把「AI」「v1」从 Ma Shan Zheng 那副潦草拉丁里夺回正体
+        li: ['TiLatin', '"Ma Shan Zheng"', '"EB Garamond"', '"STLiti"', 'LiSu', 'serif'],
+        // 仿宋作正文。刻本的字是方的，楷书只作题署
+        song: ['"FangSong"', '"STFangsong"', '"Songti SC"', 'SimSun', 'serif'],
       },
       animation: {
         'coin-flip': 'coinFlip 0.8s ease-out',
@@ -32,9 +43,10 @@ export default {
       },
       keyframes: {
         coinFlip: {
+          // 抛得低、转得多：钱是掷在案上的，不是抛过屋顶的
           '0%': { transform: 'rotateY(0deg) translateY(0)' },
-          '50%': { transform: 'rotateY(720deg) translateY(-60px)' },
-          '100%': { transform: 'rotateY(1440deg) translateY(0)' },
+          '50%': { transform: 'rotateY(900deg) translateY(-28px)' },
+          '100%': { transform: 'rotateY(1800deg) translateY(0)' },
         },
         coinLand: {
           '0%': { transform: 'scale(1)' },
@@ -50,8 +62,8 @@ export default {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         yaoReveal: {
-          '0%': { opacity: '0', transform: 'scaleY(0)' },
-          '100%': { opacity: '1', transform: 'scaleY(1)' },
+          '0%': { opacity: '0', transform: 'translateX(-12px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
         },
       },
     },
