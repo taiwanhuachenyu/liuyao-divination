@@ -49,7 +49,7 @@ export const HEXAGRAMS: Hexagram[] = [
   },
   {
     id: 4, name: '山水蒙', symbol: '䷃', upperTrigram: GEN, lowerTrigram: KAN,
-    judgment: '蒙：亨。匪我求童蒙，童蒙求我。初噬告，再三渎，渎则不告。利贞。',
+    judgment: '蒙：亨。匪我求童蒙，童蒙求我。初筮告，再三渎，渎则不告。利贞。',
     lines: [
       { position: 1, text: '初六：发蒙，利用刑人，用说桎梏，以往吝。' },
       { position: 2, text: '九二：包蒙吉，纳妇吉，子克家。' },
@@ -135,7 +135,7 @@ export const HEXAGRAMS: Hexagram[] = [
     id: 11, name: '地天泰', symbol: '䷊', upperTrigram: KUN, lowerTrigram: QIAN,
     judgment: '泰：小往大来，吉亨。',
     lines: [
-      { position: 1, text: '初九：拔茅茹，以其夤，征吉。' },
+      { position: 1, text: '初九：拔茅茹，以其汇，征吉。' },
       { position: 2, text: '九二：包荒，用冯河，不遐遗，朋亡，得尚于中行。' },
       { position: 3, text: '九三：无平不陂，无往不复，艰贞无咎。勿恤其孚，于食有福。' },
       { position: 4, text: '六四：翩翩不富，以其邻，不戒以孚。' },
@@ -147,7 +147,7 @@ export const HEXAGRAMS: Hexagram[] = [
     id: 12, name: '天地否', symbol: '䷋', upperTrigram: QIAN, lowerTrigram: KUN,
     judgment: '否：否之匪人，不利君子贞，大往小来。',
     lines: [
-      { position: 1, text: '初六：拔茅茹，以其夤，贞吉亨。' },
+      { position: 1, text: '初六：拔茅茹，以其汇，贞吉亨。' },
       { position: 2, text: '六二：包承。小人吉，大人否亨。' },
       { position: 3, text: '六三：包羞。' },
       { position: 4, text: '九四：有命无咎，畴离祉。' },
@@ -531,7 +531,7 @@ export const HEXAGRAMS: Hexagram[] = [
     id: 44, name: '天风姤', symbol: '䷫', upperTrigram: QIAN, lowerTrigram: XUN,
     judgment: '姤：女壮，勿用取女。',
     lines: [
-      { position: 1, text: '初六：系于金柅，贞吉，有攸往，见凶，羸豕踟躅。' },
+      { position: 1, text: '初六：系于金柅，贞吉，有攸往，见凶，羸豕孚蹢躅。' },
       { position: 2, text: '九二：包有鱼，无咎，不利宾。' },
       { position: 3, text: '九三：臀无肤，其行次且，厉，无大咎。' },
       { position: 4, text: '九四：包无鱼，起凶。' },
@@ -685,7 +685,7 @@ export const HEXAGRAMS: Hexagram[] = [
   },
   {
     id: 57, name: '巽为风', symbol: '䷸', upperTrigram: XUN, lowerTrigram: XUN,
-    judgment: '巽：小亨，利攸往，利见大人。',
+    judgment: '巽：小亨，利有攸往，利见大人。',
     lines: [
       { position: 1, text: '初六：进退，利武人之贞。' },
       { position: 2, text: '九二：巽在床下，用史巫纷若，吉无咎。' },

@@ -123,6 +123,9 @@ function getHourZhi(hour: number): number {
   return 11
 }
 
+// 时辰名，与 getHourZhi 同出一源，免得起卦所用与界面所示两处各算一套
+export const shichenName = (hour: number) => `${DI_ZHI_ORDER[getHourZhi(hour)]}时`
+
 interface GanZhiInfo {
   yearGanZhi: string  // 太岁，以立春为界，如「丙午」
   dayGanZhi: string   // 日辰，如「戊子」
@@ -138,7 +141,8 @@ function getGanZhiInfo(date: Date): GanZhiInfo {
     date.getHours(), date.getMinutes(), date.getSeconds()
   )
   const lunar = solar.getLunar()
-  const dayGanZhi = lunar.getDayInGanZhi()
+  // 日辰以子时（23 时）换日，非零点：Exact 一系正是此口径，旬空须与日辰同源，否则两处各说一套
+  const dayGanZhi = lunar.getDayInGanZhiExact()
   const dayGan = Math.max(0, TIAN_GAN.indexOf(dayGanZhi.charAt(0)))
   const monthZhi = lunar.getMonthInGanZhiExact().charAt(1) // 月建地支，以节为界
   return {
@@ -147,7 +151,7 @@ function getGanZhiInfo(date: Date): GanZhiInfo {
     dayGanZhi,
     dayGan,
     monthJian: monthZhi + '月',
-    xunKong: lunar.getDayXunKong() + '空', // getDayXunKong 返回如「午未」
+    xunKong: lunar.getDayXunKongExact() + '空', // 返回如「午未」
   }
 }
 
@@ -301,21 +305,22 @@ const SANHUI: { zhi: string[]; name: string }[] = [
   { zhi: ['申', '酉', '戌'], name: '三会金局' },
 ]
 
-// 检出卦中三合／三会局：三支俱全且有动爻参与方以「成局」论（依《增删卜易·三合章》）
+// 检出卦中三合／三会局。依《增删卜易·三合章》「静而不动者不取」：三支须各自发动，
+// 一支安静即不成局；静爻惟逢日辰冲起（暗动）方作动论；逢旬空、月破者力已散，亦不入局。
+// 须在 computeYaoStates 之后调用，暗动、旬空、月破皆取其所记之爻情
 function detectHeju(najia: NajiaItem[], originalYao: Yao[]): string[] {
-  const zhiPos = new Map<string, number[]>()
+  // 同一地支可现于两爻（如乾卦无重支，坤宫诸卦则有），其中任一爻可用即以该支论
+  const usable = new Map<string, boolean>()
   najia.forEach((n, i) => {
-    const z = zhiOf(n.naJia)
-    if (!zhiPos.has(z)) zhiPos.set(z, [])
-    zhiPos.get(z)!.push(i)
+    const zhi = zhiOf(n.naJia)
+    const tags = n.tags ?? []
+    const ok = !tags.includes('旬空') && !tags.includes('月破')
+      && (!!originalYao[i]?.changing || tags.includes('暗动'))
+    usable.set(zhi, (usable.get(zhi) ?? false) || ok)
   })
   const result: string[] = []
   for (const group of [...SANHE, ...SANHUI]) {
-    // 三支俱全且有动爻发动方以成局论（依《增删卜易·三合章》，静而不动者不取）
-    if (group.zhi.every(z => zhiPos.has(z)) &&
-        group.zhi.some(z => zhiPos.get(z)!.some(i => originalYao[i]?.changing))) {
-      result.push(group.name)
-    }
+    if (group.zhi.every(z => usable.get(z))) result.push(group.name)
   }
   return result
 }
@@ -405,7 +410,8 @@ function hexagramRelation(naJiaArr: string[]): '六冲' | '六合' | null {
   return null
 }
 
-// 卦反吟／伏吟：内卦（初二三）或外卦（四五上）三爻俱动，且变出之支与本支全同（伏吟）或全冲（反吟）
+// 卦反吟／伏吟：内卦（初二三）或外卦（四五上）有爻发动，且变出之三支与本支全同（伏吟）或全冲（反吟）。
+// 不必三爻俱动：如乾内变震内，二三两爻动而三支（子寅辰）全同，正是内卦伏吟
 function hexagramYinTags(najia: NajiaItem[], changedNajia: ChangedNajiaItem[] | null, originalYao: Yao[]): string[] {
   if (!changedNajia) return []
   const tags: string[] = []
@@ -459,8 +465,10 @@ export function createDivination(
   const original = getHexagramFromYaos(yaoBools)
   const { hexagram: changed, changedYaos } = getChangedHexagram(originalYao)
 
-  // 日辰、月建、旬空、六神均以起卦所选日期（天机起卦含时辰）推算，而非当前时刻
-  const hh = hour != null ? String(hour).padStart(2, '0') : '12'
+  // 日辰、月建、旬空、六神均以起卦所选之时日推算，而非当前时刻。
+  // 时辰不可省：月建以节之精确交接时刻为界（如 2026 立秋在 08-07 19:42），
+  // 日辰又以 23 时换日，若一律钉作正午，交节当日与夜子时段的整列旺衰俱错
+  const hh = String(hour ?? 12).padStart(2, '0')
   const selected = new Date(`${date}T${hh}:00:00`)
   const ganZhiDate = isNaN(selected.getTime()) ? new Date() : selected
   const { yearGanZhi, dayGanZhi, dayGan, monthJian, xunKong } = getGanZhiInfo(ganZhiDate)
@@ -490,6 +498,8 @@ export function createDivination(
     id: genId(),
     question,
     date: `${date} ${dayGanZhi}日 ${monthJian} ${xunKong}`,
+    // 时辰既定下卦与动爻（天机起卦），又定月建日辰，不存则此卦无从复现
+    hour,
     method,
     originalYao,
     changedYao: changed ? changedYaos : originalYao.map(y => ({ ...y, changing: false })),

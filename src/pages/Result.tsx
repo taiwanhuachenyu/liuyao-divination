@@ -6,8 +6,9 @@ import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkCjkFriendly from 'remark-cjk-friendly'
 import { useDivinationStore } from '../store/useDivinationStore'
+import { useAiStore } from '../store/useAiStore'
 import { useSettingsStore } from '../store/useSettingsStore'
-import { getHexagramInterpretation } from '../utils/divination'
+import { getHexagramInterpretation, shichenName } from '../utils/divination'
 import { aiDivination, isAiConfigured } from '../utils/ai'
 import SettingsDrawer from '../components/SettingsDrawer'
 
@@ -78,18 +79,20 @@ const mdComponents: Components = {
   pre: ({ children }) => (
     <pre className="my-3 p-3 rounded-lg bg-ink/90 text-paper text-sm overflow-x-auto">{children}</pre>
   ),
+  // 行内代码与链接常是不带空格的长串，不许其断行则整版被撑宽、横向出滚动条
   code: ({ children }) => (
-    <code className="px-1.5 py-0.5 rounded bg-paper-dark/60 text-indigo text-sm">{children}</code>
+    <code className="px-1.5 py-0.5 rounded bg-paper-dark/60 text-indigo text-sm break-words">{children}</code>
   ),
   a: ({ children, href }) => (
-    <a href={href} target="_blank" rel="noreferrer" className="text-indigo underline decoration-indigo/40 hover:decoration-indigo">{children}</a>
+    <a href={href} target="_blank" rel="noreferrer" className="text-indigo underline decoration-indigo/40 hover:decoration-indigo break-words">{children}</a>
   ),
   table: ({ children }) => (
     <div className="my-3 overflow-x-auto">
       <table className="w-full border-collapse text-sm md:text-base">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-cinnabar/8">{children}</thead>,
+  // Tailwind 的不透明度刻度里没有 8，bg-cinnabar/8 一条 CSS 都不生成，须写作任意值
+  thead: ({ children }) => <thead className="bg-cinnabar/[0.08]">{children}</thead>,
   th: ({ children }) => (
     <th className="border border-paper-dark px-3 py-1.5 text-cinnabar font-medium text-left">{children}</th>
   ),
@@ -100,7 +103,15 @@ const mdComponents: Components = {
 
 export default function Result() {
   const navigate = useNavigate()
-  const { result, reset, aiInterpretation, aiLoading, appendAiInterpretation, setAiInterpretation, setAiLoading } = useDivinationStore()
+  const { result, reset } = useDivinationStore()
+  const {
+    interpretation: aiInterpretation,
+    loading: aiLoading,
+    append: appendAiInterpretation,
+    setInterpretation: setAiInterpretation,
+    setLoading: setAiLoading,
+    resetAi,
+  } = useAiStore()
   const aiConfig = useSettingsStore((state) => state.aiConfig)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const aiReady = isAiConfigured(aiConfig)
@@ -112,13 +123,19 @@ export default function Result() {
     abortRef.current = null
   }, [])
 
+  // 解卦文字与卦一一对应：另换一卦（如自历史中取出）便须清掉前一卦的解读，
+  // 否则新卦顶着旧解读，用户还当是刚算出来的
+  useEffect(() => {
+    resetAi()
+  }, [result?.id, resetAi])
+
   if (!result) {
     return (
       <div className="min-h-screen flex items-center justify-center relative">
         <div className="bagua-decoration text-[200px] opacity-5 yin-yang-spin">☯</div>
         <div className="text-center relative z-10">
           <p className="text-ink-light mb-6 text-xl">暂无排盘结果</p>
-          <button onClick={() => navigate('/')} className="seal-button-primary px-8 py-3 text-lg">
+          <button onClick={() => navigate('/', { replace: true })} className="seal-button-primary px-8 py-3 text-lg">
             返回起卦
           </button>
         </div>
@@ -139,6 +156,16 @@ export default function Result() {
 
   const methodName = result.method === 'coins' ? '铜钱摇卦' : result.method === 'manual' ? '手动起卦' : '天机起卦'
 
+  const copyToClipboard = (text: string) => {
+    if (!navigator.clipboard) {
+      alert('当前环境不支持分享或复制，请手动截图保存')
+      return
+    }
+    navigator.clipboard.writeText(text)
+      .then(() => alert('卦象已复制到剪贴板'))
+      .catch(() => alert('复制失败，请手动截图保存'))
+  }
+
   const handleShare = () => {
     const summary = [
       '六爻排盘',
@@ -152,19 +179,21 @@ export default function Result() {
       navigator.share({
         title: `六爻排盘 - ${original.name}`,
         text: summary,
-      }).catch(() => {})
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(summary)
-        .then(() => alert('卦象已复制到剪贴板'))
-        .catch(() => alert('复制失败，请手动截图保存'))
-    } else {
-      alert('当前环境不支持分享')
+      }).catch((err: unknown) => {
+        // 用户自行取消（AbortError）不必再打扰；其余是分享当真失败，须退回复制，
+        // 否则原先一概吞掉，点了分享毫无动静
+        if ((err as { name?: string } | null)?.name === 'AbortError') return
+        copyToClipboard(summary)
+      })
+      return
     }
+    copyToClipboard(summary)
   }
 
   const handleNew = () => {
     reset()
-    navigate('/')
+    // 用 replace：结果页已随 reset 失去卦例，留在历史里只会退回一个「暂无排盘结果」的空壳
+    navigate('/', { replace: true })
   }
 
   const handleAiDivination = async () => {
@@ -202,8 +231,8 @@ export default function Result() {
 
       <header className="max-w-5xl mx-auto mb-5 md:mb-8 relative z-50">
         <div className="flex items-center justify-between">
-          <button 
-            onClick={() => navigate('/')}
+          <button
+            onClick={() => navigate('/', { replace: true })}
             className="flex items-center gap-1 md:gap-2 text-ink-light hover:text-ink transition-all hover:gap-2 md:hover:gap-3 text-sm md:text-lg"
           >
             <ArrowLeft size={18} className="md:w-[22px] md:h-[22px]" />
@@ -230,7 +259,8 @@ export default function Result() {
         <div className="paper-card p-4 md:p-8 mb-4 md:mb-6 animate-fade-in">
           <div className="p-3 md:p-4 rounded-lg bg-paper-dark/20 text-center mb-2 md:mb-4">
             <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 占问事项</div>
-            <div className="text-sm md:text-lg mt-1 text-ink">{question || '（未填写）'}</div>
+            {/* 占问事项由用户随手输入，可长可无空格，不许断行则整张卡片被撑破 */}
+            <div className="text-sm md:text-lg mt-1 text-ink break-words">{question || '（未填写）'}</div>
           </div>
           {/* 太岁、月建、日辰、旬空同为断卦之时令纲纪，故并作一排；朱红者为提纲与主宰，赭者为参看 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-center">
@@ -253,7 +283,7 @@ export default function Result() {
           </div>
           <div className="mt-2 md:mt-4 text-center text-xs md:text-sm text-ink-light/70">
             {/* date 字段含日辰月建旬空，此处只取公历日期，免与上方四格重复 */}
-            {date.split(' ')[0]} | {methodName}
+            {date.split(' ')[0]}{typeof result.hour === 'number' ? ` ${shichenName(result.hour)}` : ''} | {methodName}
           </div>
         </div>
 

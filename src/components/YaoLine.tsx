@@ -1,5 +1,10 @@
 import { Yao } from '../types'
 
+// 动爻的 ○／× 标记浮在爻线右侧 8px 至 32px 处（.changing-mark 取 -right-8, w-6），
+// 左边距须让开这段，否则凡遇动爻，那枚不透明的圆牌正好压住爻位二字。
+// 静爻一并留出同样的边距，六爻的爻位方能对齐成一列
+const LABEL_CLASS = 'ml-10 text-sm text-ink-light w-8'
+
 interface YaoLineProps {
   yao: Yao | null
   label?: string
@@ -20,7 +25,7 @@ export default function YaoLine({ yao, label, showChanging = true, size = 'md', 
     return (
       <div className={`flex items-center justify-center ${sizeClasses.space}`}>
         <div className={`${sizeClasses.line} bg-ink/10 rounded ${sizeClasses.yang}`} />
-        {label && <span className="ml-4 text-sm text-ink-light w-8">{label}</span>}
+        {label && <span className={LABEL_CLASS}>{label}</span>}
       </div>
     )
   }
@@ -45,7 +50,7 @@ export default function YaoLine({ yao, label, showChanging = true, size = 'md', 
           </div>
         )}
       </div>
-      {label && <span className="ml-4 text-sm text-ink-light w-8">{label}</span>}
+      {label && <span className={LABEL_CLASS}>{label}</span>}
     </div>
   )
 }

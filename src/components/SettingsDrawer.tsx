@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AlertCircle, CheckCircle2, Eye, EyeOff, Loader2, X } from 'lucide-react'
 import { AiConfig } from '../types'
 import { EMPTY_AI_CONFIG, useSettingsStore } from '../store/useSettingsStore'
+import { useDrawer } from '../hooks/useDrawer'
 import { isAiConfigured, resolveEndpoint, testAiConnection } from '../utils/ai'
 
 interface SettingsDrawerProps {
@@ -36,13 +37,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     setTest({ status: 'idle', message: '' })
   }, [open])
 
-  // 以 dialog 自任，则须应 Esc 而退，方合无障碍之常规
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  const panelRef = useDrawer(open, onClose)
 
   const endpoint = resolveEndpoint(draft.baseUrl)
   const complete = isAiConfigured(draft)
@@ -84,6 +79,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
       />
       {/* visibility 一并纳入过渡：滑出动画照旧，收起后才真正隐藏，键盘 Tab 不会再落进抽屉 */}
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="AI 解卦设置"

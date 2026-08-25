@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { History, RotateCcw, Sparkles, Clock, Settings } from 'lucide-react'
-import { todayStr, useDivinationStore, ymd } from '../store/useDivinationStore'
+import { useDivinationStore, ymd } from '../store/useDivinationStore'
 import { createDivination, readCoins, timeDivination, tossCoins } from '../utils/divination'
 import Coin from '../components/Coin'
 import YaoLine from '../components/YaoLine'
@@ -27,10 +27,14 @@ const SHICHEN = [
 ]
 // 小时 → 时辰序号（与 getHourZhi 一致：子时含跨夜 23–01）
 const hourToShichen = (h: number) => Math.floor(((h + 1) % 24) / 2)
-const tomorrowStr = () => {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  return ymd(d)
+
+// 起卦一刻方定时日：钟点若仍随时钟自走（用户未自选日期与时辰），则以当下为准，
+// 不用页面挂载那一刻的旧值。天机起卦的下卦与动爻俱由时辰而定，跨一个时辰即是另一卦；
+// 铜钱与手动虽不由时辰定爻，其月建（以节之精确时刻为界）与日辰（23 时换日）亦系于此
+function occasionOf(date: string, hour: number, auto: boolean) {
+  if (!auto) return { date, hour }
+  const now = new Date()
+  return { date: ymd(now), hour: now.getHours() }
 }
 const METHOD_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   coins: { label: '铜钱摇卦', icon: <span className="text-lg">⚂</span> },
@@ -43,8 +47,9 @@ export default function Home() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [coinResults, setCoinResults] = useState<boolean[] | null>(null)
-  const [nowHour, setNowHour] = useState(() => new Date().getHours())
   const tossTimers = useRef<ReturnType<typeof setTimeout>[]>([])
+  // 时日是否仍随时钟自走。用户一经自选日期或时辰，即以其所选为准，不再代为改动
+  const autoTime = useRef(true)
   const {
     yaos, question, date, hour, method, currentStep, isFlipping,
     setQuestion, setDate, setHour, setMethod, addYao, setYao, setIsFlipping,
@@ -63,11 +68,17 @@ export default function Home() {
     tossTimers.current = []
   }, [])
 
-  // 每分钟自省一次此刻钟点：页面若在 23 点前打开，过点之后也能及时给出换日提示
+  // 时与日皆随时钟自省：页面若久开不动，跨过时辰界或午夜之后，仍按挂载那一刻排盘便是错的
   useEffect(() => {
-    const timer = setInterval(() => setNowHour(new Date().getHours()), 60_000)
+    const timer = setInterval(() => {
+      if (!autoTime.current) return
+      const now = new Date()
+      const state = useDivinationStore.getState()
+      if (ymd(now) !== state.date) setDate(ymd(now))
+      if (now.getHours() !== state.hour) setHour(now.getHours())
+    }, 20_000)
     return () => clearInterval(timer)
-  }, [])
+  }, [setDate, setHour])
 
   useEffect(() => {
     if (method !== 'coins' || isFlipping || currentStep < 6) return
@@ -75,7 +86,8 @@ export default function Home() {
       const state = useDivinationStore.getState()
       const completeYaos = state.yaos.filter((y): y is NonNullable<typeof y> => y !== null)
       if (completeYaos.length === 6) {
-        const result = createDivination(completeYaos, state.question, state.date, state.method)
+        const { date: d, hour: h } = occasionOf(state.date, state.hour, autoTime.current)
+        const result = createDivination(completeYaos, state.question, d, state.method, h)
         state.setResult(result)
         navigate('/result')
       }
@@ -83,8 +95,15 @@ export default function Home() {
     return () => clearTimeout(timer)
   }, [currentStep, isFlipping, method, navigate])
 
+  // 在途的抛掷回调会把新的一爻补进已清空的卦里，故凡重起一卦，必先掐断
+  const clearTossTimers = () => {
+    tossTimers.current.forEach(clearTimeout)
+    tossTimers.current = []
+  }
+
   const handleMethodChange = (m: 'coins' | 'manual' | 'time') => {
-    // setMethod 已重置 yaos 与 currentStep；此处不调用 reset()，以保留用户已填写的占问事项
+    // setMethod 已重置 yaos、currentStep 与 isFlipping；此处不调用 reset()，以保留用户已填写的占问事项
+    clearTossTimers()
     setMethod(m)
     setCoinResults(null)
   }
@@ -107,9 +126,10 @@ export default function Home() {
   }
 
   const handleTimeDivination = () => {
-    const timeYaos = timeDivination(date, hour)
+    const { date: d, hour: h } = occasionOf(date, hour, autoTime.current)
+    const timeYaos = timeDivination(d, h)
     if (!timeYaos) return
-    const result = createDivination(timeYaos, question, date, 'time', hour)
+    const result = createDivination(timeYaos, question, d, 'time', h)
     setResult(result)
     navigate('/result')
   }
@@ -118,12 +138,14 @@ export default function Home() {
     const state = useDivinationStore.getState()
     const completeYaos = state.yaos.filter((y): y is NonNullable<typeof y> => y !== null)
     if (completeYaos.length !== 6) return
-    const result = createDivination(completeYaos, state.question, state.date, state.method)
+    const { date: d, hour: h } = occasionOf(state.date, state.hour, autoTime.current)
+    const result = createDivination(completeYaos, state.question, d, state.method, h)
     setResult(result)
     navigate('/result')
   }
 
   const handleReset = () => {
+    clearTossTimers()
     resetYaos()
     setCoinResults(null)
   }
@@ -133,8 +155,8 @@ export default function Home() {
   const manualComplete = manualSelectedCount === 6
   // 月建、日辰、旬空俱由所选之日推算，日期缺失便无从排盘，故先行拦下
   const dateValid = /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(new Date(`${date}T12:00:00`).getTime())
-  // 干支日以子时（23 时）换日而非零点：此刻已入夜子却仍占今日，日辰实应属次日
-  const ziShiCrossDay = nowHour === 23 && date === todayStr()
+  // 干支日以子时（23 时）换日而非零点，排盘已照此推算；此处只据实相告，免得用户见日辰与公历日不合而生疑
+  const ziShiCrossDay = hour === 23
 
   return (
     <div className="min-h-screen py-4 md:py-8 px-3 md:px-4 relative">
@@ -216,7 +238,7 @@ export default function Home() {
                 id="divination-date"
                 type="date"
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => { autoTime.current = false; setDate(e.target.value) }}
                 aria-invalid={!dateValid}
                 className={`w-full px-4 py-2.5 md:py-3 border rounded-lg bg-paper/50 focus:outline-none focus:ring-2 focus:ring-cinnabar/20 transition-all text-base md:text-lg ${dateValid ? 'border-paper-dark focus:border-cinnabar' : 'border-cinnabar'}`}
               />
@@ -225,14 +247,7 @@ export default function Home() {
               )}
               {dateValid && ziShiCrossDay && (
                 <p className="mt-1.5 text-xs text-cinnabar">
-                  已交子时，干支日以 23 时换日，此刻起卦日辰当属次日
-                  <button
-                    type="button"
-                    onClick={() => setDate(tomorrowStr())}
-                    className="ml-1.5 underline underline-offset-2 rounded hover:text-ink focus:outline-none focus:ring-2 focus:ring-cinnabar/40 transition-colors"
-                  >
-                    改选次日
-                  </button>
+                  已交子时，干支日以 23 时换日，此卦日辰、旬空、六神皆已按次日推算
                 </p>
               )}
             </div>
@@ -393,7 +408,7 @@ export default function Home() {
                     return (
                       <button
                         key={sc.name}
-                        onClick={() => setHour(sc.hour)}
+                        onClick={() => { autoTime.current = false; setHour(sc.hour) }}
                         aria-pressed={selected}
                         className={`px-1 py-1.5 md:py-2 rounded-lg border transition-all text-xs md:text-sm ${
                           selected
@@ -429,13 +444,14 @@ export default function Home() {
               {method === 'coins' && currentStep > 0 ? '卦象渐显...' : '已确定爻位预览'}
             </h3>
             <div className="flex flex-col items-center">
+              {/* 预览自上而下排列，而摇卦自初爻起：延迟须依落爻先后，否则先摇出的初爻反等得最久 */}
               {previewYaos.map((yao, idx) => (
-                <YaoLine 
-                  key={5 - idx} 
-                  yao={yao} 
+                <YaoLine
+                  key={5 - idx}
+                  yao={yao}
                   label={YAO_LABELS[5 - idx]}
                   animate={yao !== null}
-                  delay={idx * 100}
+                  delay={(5 - idx) * 100}
                   size="sm"
                 />
               ))}

@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
 import { X, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDivinationStore } from '../store/useDivinationStore'
+import { useDrawer } from '../hooks/useDrawer'
 import { Divination } from '../types'
 
 interface HistoryDrawerProps {
@@ -22,16 +22,10 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
   const handleNew = () => {
     reset()
     onClose()
-    navigate('/')
+    navigate('/', { replace: true })
   }
 
-  // 以 dialog 自任，则须应 Esc 而退，方合无障碍之常规
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  const panelRef = useDrawer(open, onClose)
 
   return (
     <>
@@ -41,6 +35,7 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
       />
       {/* visibility 一并纳入过渡：滑出动画照旧，收起后才真正隐藏，键盘 Tab 不会再落进抽屉 */}
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="历史记录"

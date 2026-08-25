@@ -5,7 +5,13 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "strict": true
+    "strict": true,
+    // vite.config.ts 用到 path 与 __dirname，缺此则 tsc -b 必报两处未定义
+    "types": ["node"],
+    // composite 不许 noEmit，若不另指去处，tsc -b 便把 vite.config.js 与 .d.ts 吐在仓库根上，
+    // 而 vite 择配置文件时 .js 排在 .ts 之前，那份陈旧的产物反会盖过真正的配置
+    "outDir": "./node_modules/.tmp/tsconfig.node",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo"
   },
   "include": ["vite.config.ts"]
 }

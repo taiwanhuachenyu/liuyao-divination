@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# tsc -b 的增量信息，及 vite.config.ts 若被编译所产之物。
+# vite 择配置文件时 vite.config.js 排在 .ts 之前，这份陈旧产物一旦入库便会盖过真配置
+*.tsbuildinfo
+/vite.config.js
+/vite.config.d.ts
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

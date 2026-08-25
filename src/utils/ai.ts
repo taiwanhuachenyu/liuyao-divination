@@ -1,4 +1,5 @@
 import { AiConfig, Divination } from '../types'
+import { shichenName } from './divination'
 
 const METHOD_NAMES: Record<Divination['method'], string> = {
   coins: '铜钱摇卦',
@@ -9,7 +10,7 @@ const METHOD_NAMES: Record<Divination['method'], string> = {
 const POS = ['初', '二', '三', '四', '五', '上']
 
 function buildPrompt(divination: Divination, question: string): string {
-  const { original, changed, originalYao, method, najia, changedNajia, fushen, originalRelation, changedRelation, yinTags, gongName, world, heju, guaShen, chongHe, yearGanZhi, dayGanZhi, monthJian, xunKong } = divination
+  const { original, changed, originalYao, method, hour, najia, changedNajia, fushen, originalRelation, changedRelation, yinTags, gongName, world, heju, guaShen, chongHe, yearGanZhi, dayGanZhi, monthJian, xunKong } = divination
   const changingYaos = originalYao.map((y, i: number) => y.changing ? i : -1).filter(i => i >= 0)
   const changingDesc = changingYaos.length === 0
     ? '六爻安静，无动爻（以本卦卦爻辞及用神旺衰断之）'
@@ -46,6 +47,12 @@ function buildPrompt(divination: Divination, question: string): string {
     ? `${guaShen.zhi}${guaShen.positions.length ? `（持于${guaShen.positions.map(i => POS[i]).join('、')}爻）` : '（不上卦）'}`
     : '（未取）'
 
+  // 卦宫世级与时辰皆是后加的字段，旧版存下的卦例并无，径直插值会写出「undefinedundefined卦」送进提示词
+  const gongDesc = gongName && world ? `（${gongName}${world}卦）` : ''
+  const shiChenDesc = typeof hour === 'number'
+    ? `\n占时：${shichenName(hour)}（六爻旺衰以年月日为纲，时辰不与；天机起卦之下卦与动爻则由此而定）`
+    : ''
+
   return `你是一位精通周易六爻纳甲筮法的国手，宗京房纳甲、法《卜筮正宗》《增删卜易》《黄金策》之古法，断卦严谨、引理有据。请依下列完整卦象详为剖断：
 
 【占问事项】${question || '（未明言，请就卦象总体气数而论）'}
@@ -55,10 +62,10 @@ function buildPrompt(divination: Divination, question: string): string {
 太岁：${yearGanZhi}年（主一年之气，久远之事、国事大端方取，寻常小事不必强参）` : ''}
 月建：${monthJian}（司权，为提纲，主一月之旺衰）
 日辰：${dayGanZhi}日（主宰，能生克冲合卦爻，最为有力）
-旬空：${xunKong}（值旬空之爻为空亡，待冲空、填实之期而应）
+旬空：${xunKong}（值旬空之爻为空亡，待冲空、填实之期而应）${shiChenDesc}
 
 【卦体】
-本卦：${original.name}，${original.upperTrigram.name}上${original.lowerTrigram.name}下（${gongName}${world}卦）（${original.judgment}）
+本卦：${original.name}，${original.upperTrigram.name}上${original.lowerTrigram.name}下${gongDesc}（${original.judgment}）
 ${changed ? `变卦：${changed.name}，${changed.upperTrigram.name}上${changed.lowerTrigram.name}下（${changed.judgment}）` : '本卦无变（六爻安静）'}
 发动：${changingDesc}
 月卦身：${guaShenDesc}
@@ -93,18 +100,30 @@ export interface StreamCallbacks {
 
 /**
  * 把用户填写的地址补全为完整端点。
- * 兼容三种常见写法：裸域名、带版本号的 base（如 .../v1）、以及已写全的完整端点。
+ * 兼容三种常见写法：裸域名、带版本号的 base（如 .../v1、.../v1beta）、以及已写全的完整端点。
+ * 判定只看 pathname：地址若带查询串（如 Azure 的 ?api-version=…），
+ * 拿整串比后缀便认不出已写全的端点，反倒再补一层 /v1/chat/completions。
+ * 地址无从解析时返回空串，由调用方拦下并告知用户。
  */
 export function resolveEndpoint(baseUrl: string): string {
-  let url = baseUrl.trim()
-  if (!url) return ''
-  if (!/^https?:\/\//i.test(url)) url = `https://${url}`
-  url = url.replace(/\/+$/, '')
+  const raw = baseUrl.trim()
+  if (!raw) return ''
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
 
-  if (url.toLowerCase().endsWith(ENDPOINT_PATH)) return url
-  // 已带版本号（/v1、/v3 等）的 base 直接接路径，避免拼出 /v1/v1
-  if (/\/v\d+$/i.test(url)) return `${url}${ENDPOINT_PATH}`
-  return `${url}/v1${ENDPOINT_PATH}`
+  let url: URL
+  try {
+    url = new URL(withScheme)
+  } catch {
+    return ''
+  }
+
+  const path = url.pathname.replace(/\/+$/, '')
+  if (path.toLowerCase().endsWith(ENDPOINT_PATH)) url.pathname = path
+  // 已带版本号（/v1、/v3、/v1beta 等）的 base 直接接路径，免得拼出 /v1/v1
+  else if (/\/v\d+[a-z0-9]*$/i.test(path)) url.pathname = `${path}${ENDPOINT_PATH}`
+  else url.pathname = `${path}/v1${ENDPOINT_PATH}`
+
+  return url.toString()
 }
 
 export const isAiConfigured = (config: AiConfig): boolean =>
@@ -160,6 +179,10 @@ async function streamCompletion(
   signal?: AbortSignal
 ): Promise<void> {
   const endpoint = resolveEndpoint(config.baseUrl)
+  if (!endpoint) {
+    callbacks.onError('接口地址无法解析，请在设置中检查所填地址（形如 https://api.example.com/v1）')
+    return
+  }
 
   let response: Response
   try {
@@ -206,44 +229,60 @@ async function streamCompletion(
 
   const decoder = new TextDecoder()
   let buffer = ''
+  let inlineFailure = ''
+  // [DONE] 或流内报错即已收工，后续行一概不取
+  let closed = false
+
+  const drain = (final: boolean) => {
+    const lines = buffer.split('\n')
+    // 末行未必完整，留待下一片再拼；收尾时已无后续，整段皆须处理
+    buffer = final ? '' : (lines.pop() ?? '')
+    for (const line of lines) {
+      if (closed) return
+      const trimmed = line.trim()
+      if (!trimmed.startsWith('data:')) continue
+
+      const data = trimmed.slice(5).trim()
+      if (data === '[DONE]') {
+        closed = true
+        return
+      }
+
+      let payload: unknown
+      try {
+        payload = JSON.parse(data)
+      } catch {
+        // 分块传输可能切断 JSON，跳过残片即可
+        continue
+      }
+
+      const inlineError =
+        asText(readPath(payload, 'error', 'message')) ?? asText(readPath(payload, 'error'))
+      if (inlineError) {
+        inlineFailure = inlineError
+        closed = true
+        return
+      }
+
+      const token = asText(readPath(payload, 'choices', '0', 'delta', 'content'))
+      if (token) callbacks.onToken(token)
+    }
+  }
 
   try {
     for (;;) {
       const { done, value } = await reader.read()
-      if (done) break
+      if (done) {
+        // 收尾两事：解码器里可能还压着半个多字节字符；末条 data 行常无收尾换行。
+        // 不在此刷净，服务端若未发 [DONE]，整篇解读的最后一句便凭空丢失
+        buffer += decoder.decode()
+        drain(true)
+        break
+      }
 
       buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() ?? ''
-
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (!trimmed.startsWith('data:')) continue
-
-        const data = trimmed.slice(5).trim()
-        if (data === '[DONE]') {
-          callbacks.onDone()
-          return
-        }
-
-        let payload: unknown
-        try {
-          payload = JSON.parse(data)
-        } catch {
-          // 分块传输可能切断 JSON，跳过残片即可
-          continue
-        }
-
-        const inlineError =
-          asText(readPath(payload, 'error', 'message')) ?? asText(readPath(payload, 'error'))
-        if (inlineError) {
-          callbacks.onError(inlineError)
-          return
-        }
-
-        const token = asText(readPath(payload, 'choices', '0', 'delta', 'content'))
-        if (token) callbacks.onToken(token)
-      }
+      drain(false)
+      if (closed) break
     }
   } catch (err) {
     if (signal?.aborted) {
@@ -252,9 +291,13 @@ async function streamCompletion(
     }
     callbacks.onError(err instanceof Error ? err.message : '读取响应流时出错')
     return
+  } finally {
+    // 未读到流尽头便收工（[DONE]、流内报错、用户中断）时须显式撤销，否则连接一直悬着
+    await reader.cancel().catch(() => undefined)
   }
 
-  callbacks.onDone()
+  if (inlineFailure) callbacks.onError(inlineFailure)
+  else callbacks.onDone()
 }
 
 export async function aiDivination(

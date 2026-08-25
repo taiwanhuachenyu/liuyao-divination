@@ -17,14 +17,18 @@ export default {
         'ink-light': '#3D3D3D',
       },
       fontFamily: {
-        li: ['"Ma Shan Zheng"', '"STLiti"', 'LiSu', '"FangSong"', 'cursive'],
+        // 末位不用 cursive：Windows 把它解作 Comic Sans MS，中文又落回默认字体，
+        // 反不如径直退到楷书，与 Ma Shan Zheng 的笔意也一路
+        li: ['"Ma Shan Zheng"', '"STLiti"', 'LiSu', '"FangSong"', 'KaiTi', '"STKaiti"', 'serif'],
       },
       animation: {
         'coin-flip': 'coinFlip 0.8s ease-out',
         'coin-land': 'coinLand 0.3s ease-out',
         'fade-in': 'fadeIn 0.5s ease-out',
         'slide-up': 'slideUp 0.5s ease-out',
-        'yao-reveal': 'yaoReveal 0.4s ease-out forwards',
+        // both 而非 forwards：只有 forwards 时，animation-delay 期间元素按自身样式显形，
+        // 延迟一过才跳回 0% 的 opacity:0，于是新落之爻先整条现出、再忽地消失重长
+        'yao-reveal': 'yaoReveal 0.4s ease-out both',
       },
       keyframes: {
         coinFlip: {

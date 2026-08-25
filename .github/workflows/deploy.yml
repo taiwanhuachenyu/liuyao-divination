@@ -12,7 +12,9 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: true
+  # 部署中途被后一次推送掐断，会在 Pages 上留下一份残缺的站点。
+  # 让其排队依次跑完，最终发布的仍是最新一次的产物
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:

@@ -60,6 +60,7 @@ export interface Divination {
   id: string
   question: string
   date: string
+  hour?: number                               // 起卦时辰所在小时；旧版卦例无此字段
   method: 'coins' | 'manual' | 'time'
   originalYao: Yao[]
   changedYao: Yao[]
