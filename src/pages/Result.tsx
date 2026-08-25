@@ -1,12 +1,15 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, RefreshCw } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Share2, BookOpen, Sparkles, RefreshCw, Settings } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkCjkFriendly from 'remark-cjk-friendly'
 import { useDivinationStore } from '../store/useDivinationStore'
+import { useSettingsStore } from '../store/useSettingsStore'
 import { getHexagramInterpretation } from '../utils/divination'
-import { aiDivination } from '../utils/ai'
+import { aiDivination, isAiConfigured } from '../utils/ai'
+import SettingsDrawer from '../components/SettingsDrawer'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
 
@@ -98,6 +101,9 @@ const mdComponents: Components = {
 export default function Result() {
   const navigate = useNavigate()
   const { result, reset, aiInterpretation, aiLoading, appendAiInterpretation, setAiInterpretation, setAiLoading } = useDivinationStore()
+  const aiConfig = useSettingsStore((state) => state.aiConfig)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const aiReady = isAiConfigured(aiConfig)
 
   if (!result) {
     return (
@@ -155,9 +161,13 @@ export default function Result() {
   }
 
   const handleAiDivination = async () => {
+    if (!aiReady) {
+      setSettingsOpen(true)
+      return
+    }
     setAiInterpretation('')
     setAiLoading(true)
-    await aiDivination(result, question, {
+    await aiDivination(result, question, aiConfig, {
       onToken: (token) => appendAiInterpretation(token),
       onDone: () => setAiLoading(false),
       onError: (err) => {
@@ -192,6 +202,9 @@ export default function Result() {
             </button>
             <button onClick={handleNew} className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md" title="重新起卦" aria-label="重新起卦">
               <RotateCcw size={18} className="md:w-[22px] md:h-[22px] text-ink-light" />
+            </button>
+            <button onClick={() => setSettingsOpen(true)} className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md" title="AI 解卦设置" aria-label="AI 解卦设置">
+              <Settings size={18} className="md:w-[22px] md:h-[22px] text-ink-light" />
             </button>
           </div>
         </div>
@@ -479,19 +492,36 @@ export default function Result() {
           <h3 className="text-xl md:text-2xl mb-4 md:mb-6 text-cinnabar flex items-center gap-2 md:gap-3 tracking-widest">
             <span className="w-1 h-6 md:h-8 bg-cinnabar rounded-full" />
             <Sparkles size={22} className="md:w-[28px] md:h-[28px]" />
-            Claude 智 能 解 卦
+            AI 智 能 解 卦
           </h3>
           
           {!aiInterpretation && !aiLoading ? (
             <div className="text-center py-8 md:py-10">
               <div className="text-5xl md:text-6xl mb-4 opacity-30">☯</div>
-              <p className="text-ink-light mb-6 text-lg md:text-xl">天机已显，请AI大师为您详解卦象吉凶</p>
-              <button 
-                onClick={handleAiDivination}
-                className="seal-button-primary px-10 md:px-16 py-3 md:py-4 text-lg md:text-xl tracking-widest"
-              >
-                ✨ 请 大 师 解 卦
-              </button>
+              {aiReady ? (
+                <>
+                  <p className="text-ink-light mb-6 text-lg md:text-xl">天机已显，请AI大师为您详解卦象吉凶</p>
+                  <button
+                    onClick={handleAiDivination}
+                    className="seal-button-primary px-10 md:px-16 py-3 md:py-4 text-lg md:text-xl tracking-widest"
+                  >
+                    ✨ 请 大 师 解 卦
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-ink-light mb-2 text-lg md:text-xl">尚未配置解卦接口</p>
+                  <p className="text-ink-light/70 mb-6 text-sm md:text-base">
+                    本站为纯静态页面，需自备接口地址与密钥，填写的配置只存于本机浏览器
+                  </p>
+                  <button
+                    onClick={() => setSettingsOpen(true)}
+                    className="seal-button px-10 md:px-14 py-3 text-base md:text-lg tracking-widest"
+                  >
+                    前 往 配 置
+                  </button>
+                </>
+              )}
             </div>
           ) : aiLoading ? (
             <div className="text-center py-10 md:py-12">
@@ -501,7 +531,7 @@ export default function Result() {
                   <div className="w-10 h-10 border-4 border-cinnabar/30 border-t-cinnabar rounded-full animate-spin"></div>
                 </div>
               </div>
-              <p className="text-ink-light text-lg">Claude大师凝神静气，推演卦象中...</p>
+              <p className="text-ink-light text-lg">大师凝神静气，推演卦象中...</p>
               <p className="text-ink-light/60 text-sm mt-2">请稍候片刻</p>
             </div>
           ) : (
@@ -519,7 +549,14 @@ export default function Result() {
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-4">
-                <button 
+                <button
+                  onClick={() => setSettingsOpen(true)}
+                  className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
+                >
+                  <Settings size={16} />
+                  接口设置
+                </button>
+                <button
                   onClick={handleAiDivination}
                   className="flex items-center gap-2 px-5 py-2 rounded-lg border border-paper-dark hover:bg-paper-dark/50 transition-colors text-sm"
                 >
@@ -599,6 +636,8 @@ export default function Result() {
           <p className="mt-1">积善之家必有余庆 积不善之家必有余殃</p>
         </footer>
       </main>
+
+      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }

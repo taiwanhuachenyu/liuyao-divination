@@ -1,8 +1,4 @@
-import { Divination } from '../types'
-
-const API_ENDPOINT = 'https://apihub.agnes-ai.com/v1/chat/completions'
-const MODEL = 'agnes-2.0-flash'
-const API_KEY = atob('c2stVXNsYTQ5MHh4UFJ0d1J3elhvSFVoeE9wY0pkd09RbktEaXk5NHQxQlVFMDRIMmo2')
+import { AiConfig, Divination } from '../types'
 
 const METHOD_NAMES: Record<Divination['method'], string> = {
   coins: '铜钱摇卦',
@@ -84,88 +80,224 @@ ${linesDesc}
 要求：说理有据、层次分明，先总断吉凶再分述缘由，语言文雅而通俗，切忌空泛套话与模棱两可，约600字。`
 }
 
+const SYSTEM_PROMPT = '你是周易六爻解卦国手，宗京房纳甲之学，深谙《卜筮正宗》《增删卜易》《黄金策》诸经，以用神为纲，参月建日辰之旺衰、动变飞伏之生克、空破墓绝之应期，断卦严谨、引理有据、切中肯綮。行文文雅通达，不作空泛套话，不模棱两可。'
+
+const ENDPOINT_PATH = '/chat/completions'
+
 export interface StreamCallbacks {
   onToken: (token: string) => void
   onDone: () => void
   onError: (error: string) => void
 }
 
-export async function aiDivination(
-  divination: Divination,
-  question: string,
-  callbacks: StreamCallbacks
-): Promise<void> {
+/**
+ * 把用户填写的地址补全为完整端点。
+ * 兼容三种常见写法：裸域名、带版本号的 base（如 .../v1）、以及已写全的完整端点。
+ */
+export function resolveEndpoint(baseUrl: string): string {
+  let url = baseUrl.trim()
+  if (!url) return ''
+  if (!/^https?:\/\//i.test(url)) url = `https://${url}`
+  url = url.replace(/\/+$/, '')
+
+  if (url.toLowerCase().endsWith(ENDPOINT_PATH)) return url
+  // 已带版本号（/v1、/v3 等）的 base 直接接路径，避免拼出 /v1/v1
+  if (/\/v\d+$/i.test(url)) return `${url}${ENDPOINT_PATH}`
+  return `${url}/v1${ENDPOINT_PATH}`
+}
+
+export const isAiConfigured = (config: AiConfig): boolean =>
+  config.baseUrl.trim() !== '' && config.apiKey.trim() !== '' && config.model.trim() !== ''
+
+function readPath(source: unknown, ...path: string[]): unknown {
+  let current = source
+  for (const key of path) {
+    if (typeof current !== 'object' || current === null) return undefined
+    current = (current as Record<string, unknown>)[key]
+  }
+  return current
+}
+
+const asText = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined
+
+// 跨域失败时浏览器只给出 Failed to fetch 一类无细节的错误，故把状态码与实际请求地址一并回显，
+// 否则用户无从判断究竟是密钥、地址、模型名还是跨域出了问题
+async function describeHttpError(response: Response, endpoint: string): Promise<string> {
+  let detail = ''
   try {
-    const response = await fetch(API_ENDPOINT, {
+    const raw = await response.text()
+    try {
+      const parsed: unknown = JSON.parse(raw)
+      detail =
+        asText(readPath(parsed, 'error', 'message')) ??
+        asText(readPath(parsed, 'message')) ??
+        asText(readPath(parsed, 'error')) ??
+        raw.slice(0, 200)
+    } catch {
+      detail = raw.slice(0, 200)
+    }
+  } catch {
+    detail = ''
+  }
+
+  let reason: string
+  if (response.status === 401 || response.status === 403) reason = '密钥无效或无访问权限'
+  else if (response.status === 404) reason = '接口地址不存在，请核对地址是否填写正确'
+  else if (response.status === 400) reason = '请求被拒绝，通常是模型名填写有误'
+  else if (response.status === 429) reason = '请求过于频繁，或账户额度不足'
+  else if (response.status >= 500) reason = '接口服务端异常'
+  else reason = '请求失败'
+
+  return `${reason}（HTTP ${response.status}）${detail ? `：${detail}` : ''}｜请求地址：${endpoint}`
+}
+
+async function streamCompletion(
+  config: AiConfig,
+  userPrompt: string,
+  callbacks: StreamCallbacks,
+  signal?: AbortSignal
+): Promise<void> {
+  const endpoint = resolveEndpoint(config.baseUrl)
+
+  let response: Response
+  try {
+    response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${API_KEY}`,
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${config.apiKey.trim()}`,
       },
+      // 不发送 temperature 与 max_tokens：推理系模型（o 系列、gpt-5 等）会拒绝这两个参数，
+      // 交由服务端取默认值可最大化兼容各家 OpenAI 兼容服务
       body: JSON.stringify({
-        model: MODEL,
+        model: config.model.trim(),
         messages: [
-          {
-            role: 'system',
-            content: '你是周易六爻解卦国手，宗京房纳甲之学，深谙《卜筮正宗》《增删卜易》《黄金策》诸经，以用神为纲，参月建日辰之旺衰、动变飞伏之生克、空破墓绝之应期，断卦严谨、引理有据、切中肯綮。行文文雅通达，不作空泛套话，不模棱两可。'
-          },
-          {
-            role: 'user',
-            content: buildPrompt(divination, question)
-          }
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
         ],
-        temperature: 0.8,
-        max_tokens: 2048,
         stream: true,
       }),
+      signal,
     })
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}))
-      throw new Error(errData.error?.message || `请求失败，状态码 ${response.status}`)
+  } catch (err) {
+    if (signal?.aborted) {
+      callbacks.onDone()
+      return
     }
+    const hint = err instanceof Error && err.message ? `（${err.message}）` : ''
+    callbacks.onError(
+      `无法连接到接口地址${hint}。常见原因：该端点未开放浏览器跨域（CORS）访问、地址填写有误，或网络被拦截。｜请求地址：${endpoint}`
+    )
+    return
+  }
 
-    const reader = response.body?.getReader()
-    if (!reader) {
-      throw new Error('无法读取响应流')
-    }
+  if (!response.ok) {
+    callbacks.onError(await describeHttpError(response, endpoint))
+    return
+  }
 
-    const decoder = new TextDecoder()
-    let buffer = ''
+  const reader = response.body?.getReader()
+  if (!reader) {
+    callbacks.onError('该接口未返回可读的流式响应，请确认服务端支持 stream')
+    return
+  }
 
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  try {
+    for (;;) {
       const { done, value } = await reader.read()
       if (done) break
 
       buffer += decoder.decode(value, { stream: true })
       const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
+      buffer = lines.pop() ?? ''
 
       for (const line of lines) {
         const trimmed = line.trim()
-        if (!trimmed || !trimmed.startsWith('data:')) continue
+        if (!trimmed.startsWith('data:')) continue
+
         const data = trimmed.slice(5).trim()
         if (data === '[DONE]') {
           callbacks.onDone()
           return
         }
 
+        let payload: unknown
         try {
-          const parsed = JSON.parse(data)
-          const content = parsed.choices?.[0]?.delta?.content
-          if (content) {
-            callbacks.onToken(content)
-          }
+          payload = JSON.parse(data)
         } catch {
-          // ignore parse errors for incomplete chunks
+          // 分块传输可能切断 JSON，跳过残片即可
+          continue
         }
+
+        const inlineError =
+          asText(readPath(payload, 'error', 'message')) ?? asText(readPath(payload, 'error'))
+        if (inlineError) {
+          callbacks.onError(inlineError)
+          return
+        }
+
+        const token = asText(readPath(payload, 'choices', '0', 'delta', 'content'))
+        if (token) callbacks.onToken(token)
       }
     }
-
-    callbacks.onDone()
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : '请求出错，请检查密钥和网络'
-    callbacks.onError(message)
+  } catch (err) {
+    if (signal?.aborted) {
+      callbacks.onDone()
+      return
+    }
+    callbacks.onError(err instanceof Error ? err.message : '读取响应流时出错')
+    return
   }
+
+  callbacks.onDone()
+}
+
+export async function aiDivination(
+  divination: Divination,
+  question: string,
+  config: AiConfig,
+  callbacks: StreamCallbacks
+): Promise<void> {
+  if (!isAiConfigured(config)) {
+    callbacks.onError('尚未配置 AI 接口，请先在设置中填写接口地址、密钥与模型名')
+    return
+  }
+  await streamCompletion(config, buildPrompt(divination, question), callbacks)
+}
+
+// 连通性测试走与正式解卦完全相同的请求路径，收到首个 token 即中断，避免白白生成整篇解读
+export async function testAiConnection(
+  config: AiConfig
+): Promise<{ ok: boolean; message: string }> {
+  if (!isAiConfigured(config)) {
+    return { ok: false, message: '请先填写接口地址、密钥与模型名' }
+  }
+
+  const controller = new AbortController()
+  let received = false
+  let failure = ''
+
+  await streamCompletion(
+    config,
+    '这是一次连通性测试，请只回复两个字：可用。',
+    {
+      onToken: () => {
+        if (received) return
+        received = true
+        controller.abort()
+      },
+      onDone: () => undefined,
+      onError: (message) => {
+        failure = message
+      },
+    },
+    controller.signal
+  )
+
+  if (received) return { ok: true, message: `连接成功，${config.model.trim()} 可正常调用` }
+  return { ok: false, message: failure || '接口已连通，但未返回任何内容，请检查模型名是否正确' }
 }

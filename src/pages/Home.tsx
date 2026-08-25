@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { History, RotateCcw, Sparkles, Clock } from 'lucide-react'
+import { History, RotateCcw, Sparkles, Clock, Settings } from 'lucide-react'
 import { useDivinationStore } from '../store/useDivinationStore'
 import { createDivination, timeDivination, tossCoins } from '../utils/divination'
 import Coin from '../components/Coin'
 import YaoLine from '../components/YaoLine'
 import HistoryDrawer from '../components/HistoryDrawer'
+import SettingsDrawer from '../components/SettingsDrawer'
 
 const YAO_LABELS = ['初', '二', '三', '四', '五', '上']
 const COIN_RESTING_FACES = [true, false, true]
@@ -35,6 +36,7 @@ const METHOD_LABELS: Record<string, { label: string; icon: React.ReactNode }> = 
 export default function Home() {
   const navigate = useNavigate()
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [coinResults, setCoinResults] = useState<boolean[] | null>(null)
   const {
     yaos, question, date, hour, method, currentStep, isFlipping,
@@ -141,6 +143,14 @@ export default function Home() {
               aria-label="查看历史记录"
             >
               <History size={22} className="md:w-[26px] md:h-[26px] text-ink-light" />
+            </button>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md"
+              title="AI 解卦设置"
+              aria-label="AI 解卦设置"
+            >
+              <Settings size={22} className="md:w-[26px] md:h-[26px] text-ink-light" />
             </button>
           </div>
         </div>
@@ -390,6 +400,7 @@ export default function Home() {
       </main>
 
       <HistoryDrawer open={historyOpen} onClose={() => setHistoryOpen(false)} />
+      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   )
 }
