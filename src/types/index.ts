@@ -76,6 +76,7 @@ export interface Divination {
   heju?: string[]                             // 三合局/三会局
   guaShen?: { zhi: string; positions: number[] }  // 月卦身
   chongHe?: string                            // 合处逢冲/冲中逢合
+  yearGanZhi?: string                         // 太岁，以立春为界；旧版卦例无此字段
   dayGanZhi: string
   monthJian: string
   xunKong: string

@@ -31,11 +31,11 @@ interface DivinationState {
   setAiLoading: (loading: boolean) => void
 }
 
+export const ymd = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
 // 每次取用时现算，不在模块加载时定死——页面若跨夜长开，日期不至于仍停在昨天
-const todayStr = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+export const todayStr = () => ymd(new Date())
 
 // 旧版本存下的卦例可能缺纳甲等字段，直接渲染会白屏，故载入时剔除残缺者
 function isRenderable(d: unknown): d is Divination {

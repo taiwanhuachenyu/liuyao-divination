@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { History, RotateCcw, Sparkles, Clock, Settings } from 'lucide-react'
-import { useDivinationStore } from '../store/useDivinationStore'
+import { todayStr, useDivinationStore, ymd } from '../store/useDivinationStore'
 import { createDivination, readCoins, timeDivination, tossCoins } from '../utils/divination'
 import Coin from '../components/Coin'
 import YaoLine from '../components/YaoLine'
@@ -27,6 +27,11 @@ const SHICHEN = [
 ]
 // 小时 → 时辰序号（与 getHourZhi 一致：子时含跨夜 23–01）
 const hourToShichen = (h: number) => Math.floor(((h + 1) % 24) / 2)
+const tomorrowStr = () => {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return ymd(d)
+}
 const METHOD_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
   coins: { label: '铜钱摇卦', icon: <span className="text-lg">⚂</span> },
   manual: { label: '手动选卦', icon: <span className="text-lg">☯</span> },
@@ -38,6 +43,7 @@ export default function Home() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [coinResults, setCoinResults] = useState<boolean[] | null>(null)
+  const [nowHour, setNowHour] = useState(() => new Date().getHours())
   const tossTimers = useRef<ReturnType<typeof setTimeout>[]>([])
   const {
     yaos, question, date, hour, method, currentStep, isFlipping,
@@ -55,6 +61,12 @@ export default function Home() {
   useEffect(() => () => {
     tossTimers.current.forEach(clearTimeout)
     tossTimers.current = []
+  }, [])
+
+  // 每分钟自省一次此刻钟点：页面若在 23 点前打开，过点之后也能及时给出换日提示
+  useEffect(() => {
+    const timer = setInterval(() => setNowHour(new Date().getHours()), 60_000)
+    return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -121,6 +133,8 @@ export default function Home() {
   const manualComplete = manualSelectedCount === 6
   // 月建、日辰、旬空俱由所选之日推算，日期缺失便无从排盘，故先行拦下
   const dateValid = /^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(new Date(`${date}T12:00:00`).getTime())
+  // 干支日以子时（23 时）换日而非零点：此刻已入夜子却仍占今日，日辰实应属次日
+  const ziShiCrossDay = nowHour === 23 && date === todayStr()
 
   return (
     <div className="min-h-screen py-4 md:py-8 px-3 md:px-4 relative">
@@ -208,6 +222,18 @@ export default function Home() {
               />
               {!dateValid && (
                 <p className="mt-1.5 text-xs text-cinnabar">请选择占问日期，月建、日辰、旬空皆由此推定</p>
+              )}
+              {dateValid && ziShiCrossDay && (
+                <p className="mt-1.5 text-xs text-cinnabar">
+                  已交子时，干支日以 23 时换日，此刻起卦日辰当属次日
+                  <button
+                    type="button"
+                    onClick={() => setDate(tomorrowStr())}
+                    className="ml-1.5 underline underline-offset-2 rounded hover:text-ink focus:outline-none focus:ring-2 focus:ring-cinnabar/40 transition-colors"
+                  >
+                    改选次日
+                  </button>
+                </p>
               )}
             </div>
           </div>

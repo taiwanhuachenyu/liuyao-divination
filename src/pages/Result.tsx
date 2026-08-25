@@ -126,7 +126,7 @@ export default function Result() {
     )
   }
 
-  const { original, changed, originalYao, changedYao, najia, changedNajia, fushen, originalRelation, changedRelation, yinTags, gongName, world, heju, guaShen, chongHe, question, date, dayGanZhi, monthJian, xunKong } = result
+  const { original, changed, originalYao, changedYao, najia, changedNajia, fushen, originalRelation, changedRelation, yinTags, gongName, world, heju, guaShen, chongHe, question, date, yearGanZhi, dayGanZhi, monthJian, xunKong } = result
   const reversedYaos = originalYao.slice().reverse()
   const reversedNajia = najia.slice().reverse()
   const changingYaos = originalYao.map((y, i) => y.changing ? i : -1).filter(i => i >= 0)
@@ -228,10 +228,15 @@ export default function Result() {
 
       <main className="max-w-5xl mx-auto relative z-10">
         <div className="paper-card p-4 md:p-8 mb-4 md:mb-6 animate-fade-in">
+          <div className="p-3 md:p-4 rounded-lg bg-paper-dark/20 text-center mb-2 md:mb-4">
+            <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 占问事项</div>
+            <div className="text-sm md:text-lg mt-1 text-ink">{question || '（未填写）'}</div>
+          </div>
+          {/* 太岁、月建、日辰、旬空同为断卦之时令纲纪，故并作一排；朱红者为提纲与主宰，赭者为参看 */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 text-center">
             <div className="p-3 md:p-4 rounded-lg bg-paper-dark/20">
-              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 占问事项</div>
-              <div className="text-sm md:text-lg mt-1 text-ink">{question || '（未填写）'}</div>
+              <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 太岁</div>
+              <div className="text-base md:text-xl mt-1 text-ocher font-bold">{yearGanZhi ? `${yearGanZhi}年` : '—'}</div>
             </div>
             <div className="p-3 md:p-4 rounded-lg bg-paper-dark/20">
               <div className="text-xs md:text-sm text-ink-light tracking-wide mb-1">◆ 月建</div>

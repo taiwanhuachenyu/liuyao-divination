@@ -124,6 +124,7 @@ function getHourZhi(hour: number): number {
 }
 
 interface GanZhiInfo {
+  yearGanZhi: string  // 太岁，以立春为界，如「丙午」
   dayGanZhi: string   // 日辰，如「戊子」
   dayGan: number      // 日干序号（0=甲…9=癸），供六神起法使用
   monthJian: string   // 月建，以节气为界，如「未月」
@@ -141,6 +142,8 @@ function getGanZhiInfo(date: Date): GanZhiInfo {
   const dayGan = Math.max(0, TIAN_GAN.indexOf(dayGanZhi.charAt(0)))
   const monthZhi = lunar.getMonthInGanZhiExact().charAt(1) // 月建地支，以节为界
   return {
+    // 太岁与月建同用节气口径：年交立春、月交节，皆不取农历正月初一
+    yearGanZhi: lunar.getYearInGanZhiExact(),
     dayGanZhi,
     dayGan,
     monthJian: monthZhi + '月',
@@ -460,7 +463,7 @@ export function createDivination(
   const hh = hour != null ? String(hour).padStart(2, '0') : '12'
   const selected = new Date(`${date}T${hh}:00:00`)
   const ganZhiDate = isNaN(selected.getTime()) ? new Date() : selected
-  const { dayGanZhi, dayGan, monthJian, xunKong } = getGanZhiInfo(ganZhiDate)
+  const { yearGanZhi, dayGanZhi, dayGan, monthJian, xunKong } = getGanZhiInfo(ganZhiDate)
   const { najia, gongId, gongElement, shi, world } = calculateNajia(original, dayGan)
   const changedNajia = changed ? calculateChangedNajia(changed, gongElement) : null
   const fushen = calculateFushen(gongId, najia)
@@ -503,6 +506,7 @@ export function createDivination(
     heju,
     guaShen,
     chongHe,
+    yearGanZhi,
     dayGanZhi,
     monthJian,
     xunKong,
