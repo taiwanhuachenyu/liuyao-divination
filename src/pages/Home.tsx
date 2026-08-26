@@ -173,9 +173,10 @@ export default function Home() {
             </p>
           </div>
           <div className="flex items-center gap-1">
-            <button 
+            {/* 触靶不小于 44px：手机上图标按钮只有 38 见方，指腹压不准 */}
+            <button
               onClick={() => setHistoryOpen(true)}
-              className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md"
+              className="flex min-h-11 min-w-11 items-center justify-center p-2 md:p-3 hover:bg-paper-dark transition-all hover:shadow-md"
               title="历史记录"
               aria-label="查看历史记录"
             >
@@ -183,7 +184,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => setSettingsOpen(true)}
-              className="p-2 md:p-3 hover:bg-paper-dark rounded-full transition-all hover:shadow-md"
+              className="flex min-h-11 min-w-11 items-center justify-center p-2 md:p-3 hover:bg-paper-dark transition-all hover:shadow-md"
               title="AI 解卦设置"
               aria-label="AI 解卦设置"
             >
@@ -202,7 +203,7 @@ export default function Home() {
                 role="tab"
                 aria-selected={method === m}
                 onClick={() => handleMethodChange(m)}
-                className={`pb-2 md:pb-3 px-3 md:px-6 text-sm md:text-lg transition-all flex items-center gap-1.5 md:gap-2 ${
+                className={`min-h-11 pb-2 md:pb-3 px-3 md:px-6 text-sm md:text-lg transition-all flex items-center justify-center gap-1.5 md:gap-2 ${
                   method === m
                     ? 'text-cinnabar border-b-2 border-cinnabar'
                     : 'text-ink-light hover:text-ink hover:bg-paper-dark/50'
@@ -234,7 +235,7 @@ export default function Home() {
                 value={date}
                 onChange={(e) => { autoTime.current = false; setDate(e.target.value) }}
                 aria-invalid={!dateValid}
-                className={`field-lan text-base md:text-lg ${dateValid ? '' : 'border-cinnabar'}`}
+                className={`w-full px-4 py-2.5 md:py-3 border border-paper-dark field-lan text-base md:text-lg ${dateValid ? '' : 'border-cinnabar'}`}
               />
               {!dateValid && (
                 <p className="mt-1.5 text-xs text-cinnabar">请选择占问日期，月建、日辰、旬空皆由此推定</p>
@@ -273,7 +274,7 @@ export default function Home() {
                 {readCoins(coinResults).caption}
               </p>
             )}
-            <p className="text-center text-ink-light text-[10px] md:text-xs mb-4 md:mb-6">
+            <p className="text-center text-ink-light text-[11px] md:text-xs mb-4 md:mb-6">
               背为阳记三、字为阴记二：六老阴、七少阳、八少阴、九老阳
             </p>
 
@@ -331,7 +332,7 @@ export default function Home() {
                           onClick={() => handleManualYao(i, opt.yin, opt.changing)}
                           aria-pressed={selected}
                           aria-label={`${YAO_LABELS[i]}爻 ${opt.label}`}
-                          className={`px-2.5 md:px-4 py-1.5 md:py-2 border transition-colors text-sm md:text-base ${
+                          className={`min-h-11 px-2.5 md:px-4 py-1.5 md:py-2 border transition-colors text-sm md:text-base ${
                             selected 
                               ? 'bg-cinnabar text-paper border-cinnabar' 
                               : 'border-paper-dark hover:border-cinnabar text-ink-light hover:text-ink'
@@ -400,7 +401,7 @@ export default function Home() {
                         key={sc.name}
                         onClick={() => { autoTime.current = false; setHour(sc.hour) }}
                         aria-pressed={selected}
-                        className={`px-1 py-1.5 md:py-2 border transition-colors text-xs md:text-sm ${
+                        className={`min-h-11 px-1 py-1.5 md:py-2 border transition-colors text-xs md:text-sm ${
                           selected
                             ? 'bg-cinnabar text-paper border-cinnabar'
                             : 'border-paper-dark hover:border-cinnabar text-ink-light hover:text-ink'
@@ -408,7 +409,7 @@ export default function Home() {
                         title={`${sc.range} 时`}
                       >
                         <div>{sc.name}</div>
-                        <div className={`text-[9px] md:text-[10px] ${selected ? 'text-paper/80' : 'text-ink-light/60'}`}>{sc.range}</div>
+                        <div className={`text-[11px] md:text-xs ${selected ? 'text-paper/80' : 'text-ink-light/60'}`}>{sc.range}</div>
                       </button>
                     )
                   })}

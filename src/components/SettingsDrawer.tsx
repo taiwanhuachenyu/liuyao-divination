@@ -12,7 +12,7 @@ interface SettingsDrawerProps {
 
 // 地址、密钥、模型名皆为拉丁字符，用全站的楷书字体（font-li）会难以辨认，故单独指定等宽字体
 const INPUT_CLASS =
-  'w-full px-3 py-2.5 border border-paper-dark field-lan text-sm font-mono'
+  'w-full min-h-11 px-3 py-2.5 border border-paper-dark field-lan text-sm font-mono'
 
 interface TestResult {
   status: 'idle' | 'testing' | 'ok' | 'fail'
@@ -74,7 +74,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`no-print fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
       {/* visibility 一并纳入过渡：滑出动画照旧，收起后才真正隐藏，键盘 Tab 不会再落进抽屉 */}
@@ -84,13 +84,13 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
         aria-modal="true"
         aria-label="AI 解卦设置"
         aria-hidden={!open}
-        className={`fixed top-0 right-0 h-full w-[92vw] max-w-md bg-paper shadow-2xl z-50 flex flex-col transform transition-[transform,visibility] duration-300 border-l border-paper-dark ${open ? 'translate-x-0 visible' : 'translate-x-full invisible'}`}
+        className={`no-print fixed top-0 right-0 h-full w-[92vw] max-w-md bg-paper shadow-2xl z-50 flex flex-col transform transition-[transform,visibility] duration-300 border-l border-paper-dark ${open ? 'translate-x-0 visible' : 'translate-x-full invisible'}`}
       >
         <div className="p-3 md:p-4 border-b border-paper-dark flex items-center justify-between shrink-0">
           <h2 className="text-lg md:text-xl text-ink">AI 解卦设置</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-paper-dark transition-colors"
+            className="flex min-h-11 min-w-11 items-center justify-center hover:bg-paper-dark transition-colors"
             title="关闭"
             aria-label="关闭设置"
           >
@@ -146,7 +146,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               <button
                 type="button"
                 onClick={() => setShowKey((prev) => !prev)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-ink-light hover:text-ink transition-colors"
+                className="absolute right-0 top-1/2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center text-ink-light hover:text-ink transition-colors"
                 title={showKey ? '隐藏密钥' : '显示密钥'}
                 aria-label={showKey ? '隐藏密钥' : '显示密钥'}
               >
@@ -214,7 +214,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           </button>
           <button
             onClick={handleClear}
-            className="w-full py-2 text-xs md:text-sm text-ink-light hover:text-cinnabar transition-colors"
+            className="w-full min-h-11 text-xs md:text-sm text-ink-light hover:text-cinnabar transition-colors"
           >
             清除已保存的配置
           </button>

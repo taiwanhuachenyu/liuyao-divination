@@ -30,7 +30,7 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
   return (
     <>
       <div 
-        className={`fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`no-print fixed inset-0 bg-black/30 z-40 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         onClick={onClose}
       />
       {/* visibility 一并纳入过渡：滑出动画照旧，收起后才真正隐藏，键盘 Tab 不会再落进抽屉 */}
@@ -40,11 +40,11 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
         aria-modal="true"
         aria-label="历史记录"
         aria-hidden={!open}
-        className={`fixed top-0 right-0 h-full w-[85vw] max-w-xs md:w-80 bg-paper shadow-2xl z-50 transform transition-[transform,visibility] duration-300 border-l border-paper-dark ${open ? 'translate-x-0 visible' : 'translate-x-full invisible'}`}
+        className={`no-print fixed top-0 right-0 h-full w-[85vw] max-w-xs md:w-80 bg-paper shadow-2xl z-50 transform transition-[transform,visibility] duration-300 border-l border-paper-dark ${open ? 'translate-x-0 visible' : 'translate-x-full invisible'}`}
       >
         <div className="p-3 md:p-4 border-b border-paper-dark flex items-center justify-between">
           <h2 className="text-lg md:text-xl text-ink">历史记录</h2>
-          <button onClick={onClose} className="p-2 hover:bg-paper-dark transition-colors" title="关闭" aria-label="关闭历史记录">
+          <button onClick={onClose} className="flex min-h-11 min-w-11 items-center justify-center hover:bg-paper-dark transition-colors" title="关闭" aria-label="关闭历史记录">
             <X size={20} />
           </button>
         </div>
@@ -68,11 +68,11 @@ export default function HistoryDrawer({ open, onClose }: HistoryDrawerProps) {
                         </div>
                       )}
                       <div className="text-xs md:text-sm text-ink-light mt-1 truncate">{d.question || '（未填事项）'}</div>
-                      <div className="text-[10px] md:text-xs text-ink-light/70 mt-1">{new Date(d.created).toLocaleString('zh-CN')}</div>
+                      <div className="text-[11px] md:text-xs text-ink-light/70 mt-1">{new Date(d.created).toLocaleString('zh-CN')}</div>
                     </button>
                     <button 
                       onClick={() => deleteHistory(d.id)}
-                      className="p-1 text-ink-light hover:text-cinnabar transition-colors"
+                      className="flex min-h-11 min-w-11 items-center justify-center text-ink-light hover:text-cinnabar transition-colors"
                       title="删除此记录"
                       aria-label={`删除记录 ${d.original.name}`}
                     >
